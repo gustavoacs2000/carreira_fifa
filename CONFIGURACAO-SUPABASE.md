@@ -37,10 +37,10 @@ Não adicione escopos para Drive, contatos, agenda ou acesso offline.
 
 Em **Authentication → URL Configuration** no Supabase:
 
-- `Site URL`: URL final da Vercel;
-- `Redirect URLs`: URL final, `http://127.0.0.1:4173` e apenas os previews que realmente forem utilizados.
+- `Site URL`: URL final da Vercel, com `https://` (nunca localhost em produção);
+- `Redirect URLs`: a mesma URL final exata, `http://127.0.0.1:4173/**` para desenvolvimento e apenas os previews que realmente forem utilizados.
 
-O `redirectTo` do código precisa estar nessa lista. Consulte a [documentação oficial de Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
+O app usa como `redirectTo` a própria URL em que foi aberto, e ela precisa estar nessa lista. Quando não há correspondência, o Supabase ignora o retorno solicitado e usa a `Site URL`; se ela ainda estiver como localhost, o login termina no endereço local. Consulte a [documentação oficial de Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
 
 ## 5. Publicar a função de exclusão
 
@@ -64,7 +64,6 @@ SUPABASE_URL=https://SEU-PROJETO.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 DATA_CONTROLLER_NAME=Nome da pessoa ou empresa responsável
 PRIVACY_CONTACT_EMAIL=privacidade@seudominio.com.br
-APP_PUBLIC_URL=https://SEU-PROJETO.vercel.app/
 ```
 
 Não cadastre `SUPABASE_SERVICE_ROLE_KEY` na Vercel.

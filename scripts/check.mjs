@@ -75,4 +75,12 @@ if (privacy.includes('{{DATA_CONTROLLER_NAME}}') || privacy.includes('{{PRIVACY_
   throw new Error('O Aviso de Privacidade ainda contém marcadores não processados.');
 }
 
+const auth = contents['dist/assets/auth.js'];
+if (auth.includes('APP_PUBLIC_URL')) {
+  throw new Error('A autenticação não deve depender de uma URL pública incorporada no build.');
+}
+if (!auth.includes('`${window.location.origin}${window.location.pathname}`')) {
+  throw new Error('O retorno da autenticação deve usar a URL atual do aplicativo.');
+}
+
 console.log('Verificação concluída: interface, autenticação, privacidade, RLS e build da Vercel estão válidos.');

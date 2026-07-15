@@ -37,7 +37,6 @@ await loadLocalEnv();
 const config = {
   supabaseUrl: process.env.SUPABASE_URL || 'https://SEU-PROJETO.supabase.co',
   supabaseKey: process.env.SUPABASE_PUBLISHABLE_KEY || 'PENDENTE',
-  appUrl: process.env.APP_PUBLIC_URL || '',
   controller: process.env.DATA_CONTROLLER_NAME || 'CONFIGURAÇÃO PENDENTE: informe o controlador',
   privacyEmail: process.env.PRIVACY_CONTACT_EMAIL || 'privacidade@exemplo.invalid'
 };
@@ -75,8 +74,7 @@ await writeFile(resolve(dist, 'privacidade.html'), privacy, 'utf8');
 let authSource = await readFile(resolve(root, 'src', 'auth.js'), 'utf8');
 authSource = authSource
   .replace('__SUPABASE_URL__', JSON.stringify(config.supabaseUrl))
-  .replace('__SUPABASE_PUBLISHABLE_KEY__', JSON.stringify(config.supabaseKey))
-  .replace('__APP_PUBLIC_URL__', JSON.stringify(config.appUrl));
+  .replace('__SUPABASE_PUBLISHABLE_KEY__', JSON.stringify(config.supabaseKey));
 await writeFile(resolve(dist, 'assets', 'auth.js'), authSource, 'utf8');
 
 const authSize = (await stat(resolve(dist, 'assets', 'auth.js'))).size;

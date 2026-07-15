@@ -3,7 +3,6 @@ const { createClient } = window.supabase;
 
 const SUPABASE_URL = __SUPABASE_URL__;
 const SUPABASE_PUBLISHABLE_KEY = __SUPABASE_PUBLISHABLE_KEY__;
-const APP_PUBLIC_URL = __APP_PUBLIC_URL__;
 const AUTH_STORAGE_KEY = 'managerFC:auth:v1';
 const configured = /^https:\/\/.+\.supabase\.co$/i.test(SUPABASE_URL) && SUPABASE_PUBLISHABLE_KEY.length > 20;
 
@@ -135,7 +134,7 @@ async function signIn() {
   if (button) button.disabled = true;
   setAuthStatus('Abrindo o acesso seguro do Google…');
 
-  const redirectTo = APP_PUBLIC_URL || `${window.location.origin}${window.location.pathname}`;
+  const redirectTo = `${window.location.origin}${window.location.pathname}`;
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
