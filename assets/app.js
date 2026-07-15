@@ -1,0 +1,560 @@
+const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
+        const STORAGE_KEY = 'managerFC:data:v2';
+        const LEGACY_STORAGE_KEYS = ['dadosApp', 'elencoFC26_v13'];
+        const cloneData = value => JSON.parse(JSON.stringify(value));
+        let activeStorageKey = STORAGE_KEY;
+        let currentUserId = null;
+        let storageErrorShown = false;
+        let abaAtiva='jogadores', modoEdicao=!1, filtros={pos:[],sit:[],status:[]}, sortDir='asc', modoTabela=!1, sortTaticasField='pos', sortTaticasDir='desc', filtroRenovacaoAtivo=!1, snapshotVisualizando=null, snapshotAbaSelecionada='jogadores', mesAtualCal=5, anoAtualCal=2025, calModoLista=!1, imgUploadIdx=-1;
+        let compsSelecionadas=[], sortStatsField='jogos', sortStatsDir='desc', editComp='';
+        
+        const compC = {"Ligue 1":"#3b82f6", "Coupe de France":"#ef4444", "UEFA Champions League":"#10b981", "UEFA Europa League":"#f59e0b", "UEFA Conference League":"#8b5cf6", "Pré-Temporada":"#6b7280"};
+        const cSit = {'Elenco':'#15803d','Emprest. - IN':'#1d4ed8','Emprest. - OUT':'#b91c1c','Base':'#cbd5e1','Observação':'#d97706','Empréstimo':'#2563eb','Transferência':'#15803d'};
+        const getCBg = c => compC[c]||'#475569';
+        const gBd = c => `<span class="badge-comp" style="background:${getCBg(c)}">${c}</span>`;
+        const rSt = v => `<div style="display:flex;gap:2px;justify-content:center">${[...Array(5)].map((_,i)=>`<svg viewBox="0 0 24 24" width="12" height="12" fill="${i<v?'#fbbf24':'none'}" stroke="${i<v?'#fbbf24':'#475569'}" stroke-width="2"><path d="M12 .5l3.6 7.5 8.3 1.2-6 5.8 1.4 8.3-7.4-4-7.4 4 1.4-8.3-6-5.8 8.3-1.2z"/></svg>`).join('')}</div>`;
+        const fZ = v => v==0?`<span style="color:#475569">0</span>`:v;
+        const fSg = v => v>0?`<span style="color:#10b981">+${v}</span>`:v<0?`<span style="color:#ef4444">${v}</span>`:fZ(v);
+        const getAdp = (p,s) => {let x=s.replace(/\d/g,'');if(p===x)return '#10b981';const g=[['ZAG','LE','LD'],['VOL','MC','MEI','ME','MD'],['ATA','PE','PD','SA','ADD','ADE']];for(let a of g)if(a.includes(p)&&a.includes(x))return '#f59e0b';return '#ef4444';};
+
+        const defaultCalendarioLigue1 = [{id:1,data:'2025-08-16',adversario:'Metz (F)',rodada:'1',campeonato:'Ligue 1'},{id:2,data:'2025-08-23',adversario:'Nantes (C)',rodada:'2',campeonato:'Ligue 1'},{id:3,data:'2025-08-30',adversario:'Monaco (F)',rodada:'3',campeonato:'Ligue 1'},{id:4,data:'2025-09-13',adversario:'Le Havre (C)',rodada:'4',campeonato:'Ligue 1'},{id:5,data:'2025-09-20',adversario:'Paris FC (F)',rodada:'5',campeonato:'Ligue 1'},{id:6,data:'2025-09-27',adversario:'Marseille (C)',rodada:'6',campeonato:'Ligue 1'}];
+        const defaultMercadoPlayer = { primeiroNome:"João", sobrenome:"Promessa", num:"-", pos:"ATA", status:"Prioridade", situacao:"Observação", idade:21, alt:185, pe:"Dir.", contAnos:0, contMeses:0, multa:15e6, valor:1e7, salario:25000, ovr:75, pot:88, dr:3, pr:4, s:[85,78,65,75,30,70], est:{} };
+        
+        function readStoredJSON(key) {
+            try {
+                const value = localStorage.getItem(key);
+                return value ? JSON.parse(value) : null;
+            } catch (error) {
+                console.warn(`Não foi possível ler ${key}.`, error);
+                return null;
+            }
+        }
+
+        function criarCarreiraInicial() {
+            const seed = window.MANAGER_FC_SEED || {};
+            const jogadores = [...(seed.elenco || []), ...(seed.base || [])];
+            const mercado = seed.mercado?.length ? seed.mercado : [defaultMercadoPlayer];
+            return {
+                schemaVersion: 2,
+                indiceAtivo: 0,
+                elencos: [{
+                    nome: 'RD Strasbourg',
+                    temporadaAtiva: 0,
+                    historico: [],
+                    temporadas: [{
+                        nome: 'Temporada 1',
+                        jogadores: cloneData(jogadores),
+                        mercado: cloneData(mercado),
+                        lineup: {},
+                        calendario: cloneData(defaultCalendarioLigue1),
+                        verba: 100000000,
+                        salario: 500000
+                    }]
+                }]
+            };
+        }
+
+        function normalizarDados(d) {
+            if(!Array.isArray(d.elencos) || !d.elencos.length) d = criarCarreiraInicial();
+            d.indiceAtivo = Math.max(0, Math.min(+d.indiceAtivo || 0, d.elencos.length - 1));
+            d.elencos.forEach(e => {
+                e.mercado = e.mercado||[defaultMercadoPlayer]; e.lineup = e.lineup||{};
+                if(!e.temporadas) {
+                    e.temporadas = [{nome:"Temporada 1", jogadores:e.jogadores||[], mercado:e.mercado, lineup:e.lineup, calendario:cloneData(defaultCalendarioLigue1), verba:e.verba??1e8, salario:e.salario??5e5}];
+                    e.temporadaAtiva=0; e.historico=[];
+                    ['jogadores','mercado','lineup','verba','salario'].forEach(k=>delete e[k]);
+                } else e.temporadas.forEach(t => t.calendario=t.calendario||cloneData(defaultCalendarioLigue1));
+                e.temporadaAtiva = Math.max(0, Math.min(+e.temporadaAtiva || 0, e.temporadas.length - 1));
+                e.historico = e.historico || [];
+            });
+            return d;
+        }
+
+        function carregarDados() {
+            let d = readStoredJSON(activeStorageKey);
+            if(!d && activeStorageKey===STORAGE_KEY) d=readStoredJSON('dadosApp');
+            if(!d && activeStorageKey===STORAGE_KEY) {
+                const antigoElenco = readStoredJSON('elencoFC26_v13');
+                d = antigoElenco
+                    ? { elencos:[{nome:'Elenco Principal', jogadores:antigoElenco, mercado:[defaultMercadoPlayer], verba:1e8, salario:5e5}], indiceAtivo:0 }
+                    : criarCarreiraInicial();
+            }
+            return normalizarDados(d||criarCarreiraInicial());
+        }
+        let appData = carregarDados();
+        const getSeason = () => appData.elencos[appData.indiceAtivo].temporadas[appData.elencos[appData.indiceAtivo].temporadaAtiva];
+        const salvarDados = (sync=true) => {
+            try {
+                appData.schemaVersion = 2;
+                localStorage.setItem(activeStorageKey, JSON.stringify(appData));
+                LEGACY_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
+                if(sync&&currentUserId) window.ManagerAuth?.queueSave(appData);
+            } catch (error) {
+                console.error('Não foi possível salvar a carreira.', error);
+                if(!storageErrorShown) {
+                    storageErrorShown = true;
+                    alert('O navegador não conseguiu salvar as alterações. Baixe um backup e verifique o espaço disponível.');
+                }
+            }
+        };
+        salvarDados();
+        
+        function consolidarEdicoes() {
+            if(!modoEdicao) return;
+            if($('#edit-verba')) getSeason().verba = parseInt($('#edit-verba').value)||0;
+            if($('#edit-salario')) getSeason().salario = parseInt($('#edit-salario').value)||0;
+            if($('#edit-squad-name')) appData.elencos[appData.indiceAtivo].nome = $('#edit-squad-name').value;
+            $$('.card').forEach(c => {
+                const i = c.getAttribute('data-index'); if(i===null) return;
+                const j = (abaAtiva==='mercado'?getSeason().mercado:getSeason().jogadores)[+i]; if(!j) return;
+                const sv = s => c.querySelector(s)?.value ?? null; let v;
+                ['situacao','status','primeiroNome','sobrenome','num','pos','pe'].forEach(f=>{if((v=sv(`[data-field="${f}"]`))!==null)j[f]=v;});
+                ['contAnos','contMeses','multa','valor','salario'].forEach(f=>{if((v=sv(`[data-field="${f}"]`))!==null)j[f]=parseInt(v)||0;});
+                ['dr','pr'].forEach(f=>{if((v=sv(`[data-field="${f}"]`))!==null)j[f]=parseInt(v)||1;});
+            }); salvarDados();
+        }
+
+        const abrirUpload = i => { consolidarEdicoes(); imgUploadIdx = i; $('#img-upload').click(); };
+        function processarImg(e) {
+            const f = e.target.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                const img = new Image();
+                img.onload = () => {
+                    const cvs = document.createElement('canvas'), ctx = cvs.getContext('2d');
+                    let w = img.width, h = img.height, max = 150;
+                    if(w>h){if(w>max){h*=max/w;w=max;}}else{if(h>max){w*=max/h;h=max;}}
+                    cvs.width = w; cvs.height = h; ctx.drawImage(img, 0, 0, w, h);
+                    const j = (abaAtiva==='mercado'?getSeason().mercado:getSeason().jogadores)[imgUploadIdx];
+                    if(j) j.img = cvs.toDataURL('image/webp', 0.8);
+                    salvarDados(); renderizar();
+                }; img.src = ev.target.result;
+            }; r.readAsDataURL(f); e.target.value = '';
+        }
+
+        const toggleAcc = b => { const c=b.nextElementSibling; c.classList.toggle('open'); b.innerHTML=c.classList.contains('open')?'▲ Ocultar':'▼ Finanças e Contrato'; };
+        function toggleEdit() { if(modoEdicao) consolidarEdicoes(); modoEdicao=!modoEdicao; $('#btn-editar').innerHTML=modoEdicao?'<span>✓</span> Salvar':'<span>✦</span> Editar'; renderizar(); }
+        function mudarAba(a) { if(modoEdicao) toggleEdit(); abaAtiva=a; $$('.sidebar-menu a').forEach(el=>el.classList.remove('ativo')); $('#link-'+a).classList.add('ativo'); filtros={pos:[],sit:[],status:[]}; filtroRenovacaoAtivo=!1; snapshotVisualizando=null; history.replaceState(null,'',`#${a}`); renderizar(); }
+        const trocarElenco = () => { if(modoEdicao) toggleEdit(); appData.indiceAtivo=$('#squad-select').selectedIndex; salvarDados(); renderizar(); };
+        const trocarTemporada = () => { if(modoEdicao) toggleEdit(); appData.elencos[appData.indiceAtivo].temporadaAtiva=$('#season-select').selectedIndex; salvarDados(); renderizar(); };
+        const adicionarElenco = () => { const n=prompt("Nome do novo elenco:"); if(n){appData.elencos.push({nome:n,temporadas:[{nome:"Temporada 1",jogadores:[],mercado:[defaultMercadoPlayer],lineup:{},calendario:[],verba:1e8,salario:5e5}],temporadaAtiva:0,historico:[]});appData.indiceAtivo=appData.elencos.length-1;salvarDados();renderizar();} };
+        const excluirElencoAtual = () => { if(appData.elencos.length<=1)return alert("Não pode excluir o último elenco!"); if(confirm("Deseja excluir este elenco?")){appData.elencos.splice(appData.indiceAtivo,1);appData.indiceAtivo=Math.max(0,appData.indiceAtivo-1);salvarDados();renderizar();} };
+        const excluirTemporadaAtual = () => { const e=appData.elencos[appData.indiceAtivo]; if(e.temporadas.length<=1)return alert("Não é possível excluir a única temporada!"); if(confirm("Excluir temporada?")){e.temporadas.splice(e.temporadaAtiva,1);e.temporadaAtiva=Math.max(0,Math.min(e.temporadaAtiva,e.temporadas.length-1));salvarDados();renderizar();} };
+
+        const getBg = v => v<60?'bg-baixo':v<70?'bg-medio':v<86?'bg-bom':'bg-otimo';
+        const formatMoney = v => { v=Number(v)||0; if(Math.abs(v)>=1e6)return '€'+(v/1e6).toFixed(1).replace('.0','')+'M'; if(Math.abs(v)>=1e3)return '€'+(v/1e3).toFixed(1).replace('.0','')+'K'; return '€'+v.toLocaleString('pt-BR'); };
+        const getStatusEmoji = s => ({'Titular':'⚽','Reserva':'🪑','Não Relacionado':'🚫','Prioridade':'🟢','Alternativa':'🟡','Fim de Contrato':'🔴'})[s]||'⚽';
+        const getSituacaoClass = s => ({'Elenco':'s-elenco','Emprest. - IN':'s-in','Emprest. - OUT':'s-out','Base':'s-base','Observação':'s-obs','Empréstimo':'s-emp','Transferência':'s-transf'})[s]||'s-base';
+        const toggleSortDirection = () => { consolidarEdicoes(); sortDir=sortDir==='asc'?'desc':'asc'; renderizar(); };
+        const toggleFiltro = (t,v) => { consolidarEdicoes(); filtros[t]=filtros[t].includes(v)?filtros[t].filter(i=>i!==v):[...filtros[t],v]; renderizar(); };
+
+        const renderizarDashboard = (f) => {
+            const s=getSeason(), sum=k=>f.reduce((a,j)=>a+(parseInt(j[k])||0),0);
+            $('#dashboard').innerHTML=`<div class="metric-card"><span class="metric-label">Total</span><span class="metric-val">${f.length}</span></div><div class="metric-card"><span class="metric-label">Média OVR</span><span class="metric-val">${f.length?(sum('ovr')/f.length).toFixed(1):0}</span></div><div class="metric-card"><span class="metric-label">Verba Disp.</span><span class="metric-val">${modoEdicao?`<input type="number" id="edit-verba" value="${s.verba}">`:formatMoney(s.verba)}</span></div><div class="metric-card"><span class="metric-label">Salário Disp.</span><span class="metric-val">${modoEdicao?`<input type="number" id="edit-salario" value="${s.salario}">`:formatMoney(s.salario)}</span></div><div class="metric-card"><span class="metric-label">${abaAtiva==='mercado'?'Valor Alvos':'Valor Total'}</span><span class="metric-val">${formatMoney(sum('valor'))}</span></div><div class="metric-card"><span class="metric-label">${abaAtiva==='mercado'?'Salário Alvos':'Salário Total'}</span><span class="metric-val">${formatMoney(sum('salario'))}</span></div>`;
+        };
+
+        const excluirAbaTodo = () => { let t=abaAtiva==='jogadores'?'o ELENCO':abaAtiva==='base'?'a BASE':'o MERCADO'; if(confirm(`Excluir todos os listados n${t}?`)){ if(abaAtiva==='mercado')getSeason().mercado=[]; else if(abaAtiva==='base')getSeason().jogadores=getSeason().jogadores.filter(j=>j.situacao!=='Base'); else{getSeason().jogadores=getSeason().jogadores.filter(j=>j.situacao==='Base');getSeason().lineup={};} salvarDados();renderizar();} };
+        
+        function parseCSV(text) {
+            const rows=[]; let row=[], cell='', quoted=false;
+            for(let i=0;i<text.length;i++) {
+                const char=text[i], next=text[i+1];
+                if(char==='"' && quoted && next==='"') { cell+='"'; i++; }
+                else if(char==='"') quoted=!quoted;
+                else if(char===',' && !quoted) { row.push(cell); cell=''; }
+                else if((char==='\n'||char==='\r') && !quoted) {
+                    if(char==='\r' && next==='\n') i++;
+                    row.push(cell); if(row.some(value=>value.trim())) rows.push(row); row=[]; cell='';
+                } else cell+=char;
+            }
+            row.push(cell); if(row.some(value=>value.trim())) rows.push(row);
+            return rows;
+        }
+
+        function importarCSV(e) {
+            consolidarEdicoes();
+            const file=e.target.files[0]; if(!file)return;
+            const r=new FileReader();
+            r.onload = ev => {
+                const rows=parseCSV(String(ev.target.result).replace(/^\uFEFF/,''));
+                let importados=0;
+                rows.slice(1).forEach(c=>{
+                    if(c.length<24)return;
+                    getSeason()[abaAtiva==='mercado'?'mercado':'jogadores'].push({primeiroNome:c[0].trim(),sobrenome:c[1].trim(),num:c[2].trim(),pos:c[3].trim(),status:c[4].trim(),situacao:c[5].trim(),idade:+c[6],alt:+c[7],pe:c[8].trim(),contAnos:+c[9],contMeses:+c[10],multa:+c[11],valor:+c[12],salario:+c[13],ovr:+c[14],pot:+c[15],dr:+c[16],pr:+c[17],s:[+c[18],+c[19],+c[20],+c[21],+c[22],+c[23]],est:{}});
+                    importados++;
+                });
+                salvarDados(); renderizar();
+                alert(importados ? `${importados} jogador(es) importado(s) com sucesso.` : 'Nenhum jogador válido foi encontrado nesse CSV.');
+            };
+            r.onerror=()=>alert('Não foi possível ler o arquivo CSV.');
+            r.readAsText(file,'UTF-8'); e.target.value='';
+        }
+        
+        function adicionarJogador() { 
+            const isM=abaAtiva==='mercado', isB=abaAtiva==='base';
+            let pos=filtros.pos[0]||"ATA", sit=filtros.sit[0]||(isM?"Observação":isB?"Base":"Elenco"), st=filtros.status[0]||(isM?"Alternativa":isB?"Não Relacionado":"Titular");
+            let id=20, alt=180, pe="Dir.", dr=3, pr=3, cA=0, cM=0, sal=10000, val=10000000, mul=0, ovr=65, pot=85;
+            if(isB||sit==="Base"){ id=15; alt=175; dr=2; pr=2; cA=3; sal=1500; val=1000000; ovr=60; pot=90; }
+            getSeason()[isM?'mercado':'jogadores'].push({primeiroNome:"Novo",sobrenome:isM?"Alvo":"Jogador",num:"-",pos:pos,status:st,situacao:sit,idade:id,alt:alt,pe:pe,contAnos:cA,contMeses:cM,multa:mul,valor:val,salario:sal,ovr:ovr,pot:pot,dr:dr,pr:pr,s:[60,60,60,60,60,60],est:{}}); 
+            salvarDados(); renderizar(); 
+        }
+        function excluirJogador(i) { if(confirm("Deseja mesmo excluir este card?")){consolidarEdicoes();const a=abaAtiva==='mercado'?getSeason().mercado:getSeason().jogadores; const r=a.splice(i,1)[0];if(abaAtiva==='jogadores'||abaAtiva==='base'){const l=getSeason().lineup;for(let k in l)if(l[k]===r)delete l[k];}salvarDados();renderizar();} }
+        function alterarValor(i,c,d,s=null,mn=1,mx=99) { consolidarEdicoes();const j=(abaAtiva==='mercado'?getSeason().mercado:getSeason().jogadores)[i];if(s!==null)j.s[s]=Math.min(mx,Math.max(mn,j.s[s]+d));else if(['multa','valor','salario'].includes(c))j[c]=Math.max(0,parseInt(j[c]||0)+d*1e5);else j[c]=Math.min(mx,Math.max(mn,parseInt(j[c]||0)+d));salvarDados();renderizar(); }
+
+        const mudarMesCal = d => { mesAtualCal+=d; if(mesAtualCal>11){mesAtualCal=0;anoAtualCal++;}else if(mesAtualCal<0){mesAtualCal=11;anoAtualCal--;} renderizar(); };
+        const dragCal = (ev,id) => ev.dataTransfer.setData("evtId",id);
+        const allowDropCal = ev => ev.preventDefault();
+        const dropCal = (ev,dS) => { ev.preventDefault(); const id=ev.dataTransfer.getData("evtId"); if(id){ const e=getSeason().calendario.find(x=>x.id===+id); if(e){e.data=dS;salvarDados();renderizar();} } };
+        
+        const abrirModalEvento = (dS,id) => {
+            const s=getSeason(),p=dS.split('-'); $('#modal-evento-data').value=dS; $('#modal-evento-data-display').value=`${p[2]}/${p[1]}/${p[0]}`;
+            if(id!==null){
+                const e=s.calendario.find(x=>x.id===id);
+                if(e){
+                    $('#modal-evento-id').value=id; let a=e.adversario||''; $('#modal-evento-adv').value=a.replace(/\s\([CF]\)$/,'');
+                    $('#modal-evento-mando').value=e.mando||(a.includes('(C)')?'C':'F'); $('#modal-evento-rodada').value=e.rodada; $('#modal-evento-camp').value=e.campeonato;
+                    $('#modal-evento-gp').value=e.gp!=null?e.gp:''; $('#modal-evento-gc').value=e.gc!=null?e.gc:''; $('#btn-excluir-evento').style.display='block';
+                }
+            }else{
+                ['id','adv','rodada','gp','gc'].forEach(k=>$('#modal-evento-'+k).value='');
+                $('#modal-evento-mando').value='C'; $('#modal-evento-camp').value='Ligue 1'; $('#btn-excluir-evento').style.display='none';
+            }
+            $('#modal-evento').style.display='flex';
+        };
+        const fecharModalEvento = () => $('#modal-evento').style.display='none';
+        function salvarEvento() {
+            const s=getSeason(),id=$('#modal-evento-id').value,advNome=$('#modal-evento-adv').value,mando=$('#modal-evento-mando').value;
+            if(!advNome)return alert("Informe o adversário.");
+            const data={adversario:`${advNome.replace(/\s\([CF]\)$/,'')} (${mando})`,mando:mando,rodada:$('#modal-evento-rodada').value,campeonato:$('#modal-evento-camp').value,gp:$('#modal-evento-gp').value,gc:$('#modal-evento-gc').value};
+            if(id)Object.assign(s.calendario.find(e=>e.id===+id),data);
+            else s.calendario.push({id:s.calendario.length?Math.max(...s.calendario.map(e=>e.id))+1:1,data:$('#modal-evento-data').value,...data});
+            salvarDados(); fecharModalEvento(); renderizar();
+        }
+        function excluirEvento() { const id=$('#modal-evento-id').value; if(id&&confirm("Excluir este evento?")){getSeason().calendario=getSeason().calendario.filter(e=>e.id!==+id);salvarDados();fecharModalEvento();renderizar();} }
+
+        function renderizarCalendario() {
+            const s=getSeason(), ds=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], ms=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const pD=new Date(anoAtualCal,mesAtualCal,1).getDay(), dNM=new Date(anoAtualCal,mesAtualCal+1,0).getDate();
+            const legH = `<div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;align-items:center"><span style="font-weight:bold;color:#cbd5e1;margin-right:5px">Legenda:</span>${Object.entries(compC).map(([n,c])=>gBd(n)).join('')}</div>`;
+            const topB = `<div class="calendar-header"><button class="btn-cal-nav" onclick="mudarMesCal(-1)">⬅️</button><h2>${ms[mesAtualCal]} ${anoAtualCal}</h2><div style="display:flex;gap:10px"><button class="btn-cal-nav" onclick="calModoLista=!calModoLista;renderizar()">🪟 Alternar</button><button class="btn-cal-nav" onclick="mudarMesCal(1)">➡️</button></div></div>`;
+            
+            if(calModoLista){
+                let lst = s.calendario.sort((a,b)=>new Date(a.data)-new Date(b.data)).map(e=>{
+                    const isC=e.mando?e.mando==='C':e.adversario.includes('(C)');
+                    const advNm=e.adversario.replace(/\s\([CF]\)$/,'');
+                    return `<div style="display:flex;align-items:center;background:#0f172a;padding:12px;margin-bottom:8px;border-radius:6px;border-left:4px solid ${isC?'#10b981':'#ef4444'};opacity:${isC?1:0.75};cursor:pointer" onclick="abrirModalEvento('${e.data}',${e.id})"><div style="width:110px;font-weight:bold;color:#cbd5e1">${e.data.split('-').reverse().join('/')}</div><div style="flex:1;font-weight:bold;font-size:1.1em">${isC?'🏠':'✈️'} ${advNm}</div><div style="flex:1">${gBd(e.campeonato)} R${e.rodada}</div><div style="width:80px;text-align:right;font-weight:bold;color:${+e.gp>+e.gc?'#10b981':+e.gp==+e.gc?'#cbd5e1':'#ef4444'};font-size:1.2em">${e.gp!=null&&e.gp!==""?e.gp+' x '+e.gc:'-'}</div></div>`;
+                }).join('');
+                return `<div class="calendar-wrapper">${topB}${legH}<div>${lst||'<div style="text-align:center;padding:20px">Sem eventos cadastrados.</div>'}</div></div>`;
+            }
+            let g = ds.map(d=>`<div class="cal-day-header">${d}</div>`).join('')+`<div class="cal-day empty"></div>`.repeat(pD);
+            for(let i=1;i<=dNM;i++){
+                const dS=`${anoAtualCal}-${String(mesAtualCal+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                g+=`<div class="cal-day" ondragover="allowDropCal(event)" ondrop="dropCal(event,'${dS}')"><button class="btn-add-event" onclick="abrirModalEvento('${dS}',null)">+</button><div class="cal-date">${i}</div>`+
+                (s.calendario||[]).filter(e=>e.data===dS).map(e=>{
+                    const isC=e.mando?e.mando==='C':e.adversario.includes('(C)');
+                    const pl=(e.gp!==""&&e.gc!==""&&e.gp!=null&&e.gc!=null)?`<div style="background:${+e.gp>+e.gc?'#15803d':+e.gp==+e.gc?'#374151':'#b91c1c'};border-radius:4px;text-align:center;font-weight:900;margin-top:3px;font-size:1.1em">${e.gp} x ${e.gc}</div>`:'';
+                    return `<div class="cal-event" style="border-left-color:${isC?'#10b981':'#ef4444'};opacity:${isC?1:0.75}" draggable="true" ondragstart="dragCal(event,${e.id})" onclick="abrirModalEvento('${dS}',${e.id})" title="${e.campeonato} - R${e.rodada}"><div class="cal-event-title">${isC?'🏠':'✈️'} ${e.adversario.replace(/\s\([CF]\)$/,'')}</div><div style="margin-top:2px">${gBd(e.campeonato)} <span style="font-size:0.9em;color:#cbd5e1">R${e.rodada}</span></div>${pl}</div>`;
+                }).join('')+`</div>`;
+            }
+            return `<div class="calendar-wrapper">${topB}${legH}<div class="calendar-grid">${g}</div></div>`;
+        }
+
+        const visualizarSnapshot = i => { snapshotVisualizando=i; renderizar(); };
+        const fecharSnapshot = () => { snapshotVisualizando=null; renderizar(); };
+        const excluirSnapshot = i => { if(confirm("Excluir snapshot?")){appData.elencos[appData.indiceAtivo].historico.splice(i,1);if(snapshotVisualizando===i)snapshotVisualizando=null;salvarDados();renderizar();} };
+        const mudarAbaSnapshot = a => { snapshotAbaSelecionada=a; renderizar(); };
+
+        function renderizarAbaHistorico() {
+            const e=appData.elencos[appData.indiceAtivo]; if(!e.historico?.length)return`<div style="text-align:center;padding:40px;color:#94a3b8;font-size:1.2em;">Nenhum histórico disponível ainda.</div>`;
+            if(snapshotVisualizando!==null)return renderizarSnapshotVisualizacao(snapshotVisualizando);
+            return `<div style="max-width:800px;margin:0 auto;padding:20px;"><h2 style="color:#fbbf24;text-align:center;border-bottom:2px solid #2d3748;padding-bottom:10px;margin-bottom:20px;">Histórico</h2><div style="display:flex;flex-direction:column;gap:15px;">`+[...e.historico].reverse().map((s,r)=>{const i=e.historico.length-1-r;return`<div class="historico-card"><div><div class="historico-title">${s.nome}</div><div class="historico-subtitle">Salvo em: ${s.data||'N/D'} | Jogadores: ${s.jogadores.length}</div></div><div style="display:flex;gap:8px;"><button class="btn-view-snap" onclick="visualizarSnapshot(${i})">👁️ Consultar</button><button class="btn-del-snap" onclick="excluirSnapshot(${i})">🗑️ Excluir</button></div></div>`}).join('')+`</div></div>`;
+        }
+        function renderizarSnapshotVisualizacao(idx) {
+            const sn=appData.elencos[appData.indiceAtivo].historico[idx], l=sn[snapshotAbaSelecionada]||[];
+            let btn=a=>`<button style="padding:6px 12px;border-radius:6px;border:1px solid #fbbf24;cursor:pointer;font-weight:700;background:${snapshotAbaSelecionada===a?'#fbbf24':'transparent'};color:${snapshotAbaSelecionada===a?'#000':'#fbbf24'};" onclick="mudarAbaSnapshot('${a}')">${a.charAt(0).toUpperCase()+a.slice(1)}</button>`;
+            let hTop=`<div style="max-width:1200px;margin:0 auto;padding:10px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><button style="background:#4b5563;color:#fff;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;font-weight:700;" onclick="fecharSnapshot()">⬅️ Voltar</button><h2 style="color:#fbbf24;margin:0;">Consulta: ${sn.nome}</h2><div style="display:flex;gap:10px;">${btn('jogadores')}${btn('mercado')}${btn('estatisticas')}</div></div>`;
+            if(snapshotAbaSelecionada==='estatisticas') return hTop + renderizarEstatisticas(sn) + `</div>`;
+            let cgSnap=`<colgroup><col width="60"><col width="auto"><col width="40"><col width="50"><col width="50"><col width="80"><col width="80"><col width="80"><col width="110"><col width="60"></colgroup>`;
+            let h=`${hTop}<div class="table-container"><table class="table-view" style="table-layout:fixed;width:100%;">${cgSnap}<thead><tr><th>Posição</th><th>Jogador</th><th>Id</th><th>OVR</th><th>POT</th><th>Multa</th><th>Valor</th><th>Salário</th><th>Situação</th><th>Status</th></tr></thead><tbody>`;
+            return h + (!l.length?`<tr><td colspan="10" style="text-align:center;padding:20px;color:#94a3b8;">Nenhum dado salvo.</td></tr>`:l.map(j=>{
+                const stH = snapshotAbaSelecionada==='jogadores'?`<span style="font-weight:700;font-size:0.9em">${{'Titular':'TIT','Reserva':'RES','Não Relacionado':'N/R'}[j.status]||'N/R'}</span>`:`<span title="${j.status}" style="font-size:1.2em;">${getStatusEmoji(j.status)}</span>`;
+                return`<tr><td><div class="pos-stat-box" style="font-size:.9em;padding:2px 4px;">${j.pos}</div></td><td class="nome-col">${j.primeiroNome} <span>${j.sobrenome}</span></td><td>${j.idade}</td><td><div class="stat-box ${getBg(j.ovr)}" style="display:inline-block;min-width:25px;padding:2px;">${j.ovr}</div></td><td><div class="stat-box ${getBg(j.pot)}" style="display:inline-block;min-width:25px;padding:2px;">${j.pot}</div></td><td>${formatMoney(j.multa)}</td><td>${formatMoney(j.valor)}</td><td>${formatMoney(j.salario)}</td><td><div class="status-faixa ${getSituacaoClass(j.situacao)}" style="margin:0;padding:2px 4px;font-size:.75em;background:${cSit[j.situacao]||'#15803d'}">${j.situacao}</div></td><td>${stH}</td></tr>`}).join(''))+`</tbody></table></div></div>`;
+        }
+
+        const toggleCompFilter = c => { if(compsSelecionadas.includes(c)) compsSelecionadas=compsSelecionadas.filter(x=>x!==c); else compsSelecionadas.push(c); renderizar(); };
+        const salvarStat = (i, c, f, v) => { const j=getSeason().jogadores[i]; j.est=j.est||{}; j.est[c]=j.est[c]||{jogos:0,gols:0,ast:0,sg:0,ca:0,cv:0,media:0}; j.est[c][f]=parseFloat(v)||0; salvarDados(); };
+        const sortStats = f => { sortStatsDir=sortStatsField===f?(sortStatsDir==='desc'?'asc':'desc'):'desc'; sortStatsField=f; renderizar(); };
+        const adicionarCompExtra = () => { const n=prompt("Nome da nova competição:"); if(n){const s=getSeason(); s.compsExtras=s.compsExtras||[]; if(!s.compsExtras.includes(n))s.compsExtras.push(n); salvarDados(); renderizar();} };
+        const renomearCompExtra = () => { const n=$('#rename-comp-input').value.trim(); if(!n||n===editComp)return; const s=getSeason(); if(s.compsExtras)s.compsExtras=s.compsExtras.map(c=>c===editComp?n:c); if(s.calendario)s.calendario.forEach(c=>{if(c.campeonato===editComp)c.campeonato=n;}); s.jogadores.forEach(j=>{if(j.est&&j.est[editComp]){j.est[n]=j.est[editComp];delete j.est[editComp];}}); if(compsSelecionadas.includes(editComp))compsSelecionadas=compsSelecionadas.map(c=>c===editComp?n:c); editComp=n; salvarDados(); renderizar(); };
+        const excluirCompExtra = () => { if(!confirm(`Excluir a competição "${editComp}" e suas estatísticas?`))return; const s=getSeason(); if(s.compsExtras)s.compsExtras=s.compsExtras.filter(c=>c!==editComp); if(s.calendario)s.calendario.forEach(c=>{if(c.campeonato===editComp)c.campeonato="Sem Competição";}); s.jogadores.forEach(j=>{if(j.est&&j.est[editComp])delete j.est[editComp];}); compsSelecionadas=compsSelecionadas.filter(c=>c!==editComp); editComp=''; salvarDados(); renderizar(); };
+
+        function renderizarEstatisticas(sourceSeason = null) {
+            const s = sourceSeason || getSeason(), isRead = !!sourceSeason || !modoEdicao;
+            const comps = [...new Set([...(s.calendario||[]).map(c => c.campeonato), ...(s.compsExtras||[])])];
+            if(!compsSelecionadas.length && comps.length) compsSelecionadas = [...comps];
+
+            let jg=0, v=0, e=0, d=0, gp=0, gc=0;
+            (s.calendario||[]).forEach(c => {
+                if(compsSelecionadas.includes(c.campeonato) && c.gp!=="" && c.gc!=="" && c.gp!=null && c.gc!=null) {
+                    jg++; gp+=+c.gp; gc+=+c.gc; if(+c.gp > +c.gc) v++; else if(+c.gp == +c.gc) e++; else d++;
+                }
+            });
+            let sg = gp - gc;
+            const tm=$('#search-input').value.toLowerCase();
+            let flt=(s.jogadores||[]).filter(j=>(!filtros.pos.length||filtros.pos.includes(j.pos))&&(!filtros.sit.length||filtros.sit.includes(j.situacao))&&(!filtros.status.length||filtros.status.includes(j.status))&&(`${j.primeiroNome} ${j.sobrenome}`.toLowerCase().includes(tm))&&(!filtroRenovacaoAtivo||(+j.contAnos===0&&+j.contMeses<=6)));
+
+            let pStats = flt.map(j => {
+                let st = {j:j, jogos:0, gols:0, ast:0, sg:0, ca:0, cv:0}; let totJ=0, sumMed=0;
+                compsSelecionadas.forEach(c => {
+                    if(j.est && j.est[c]) {
+                        st.jogos+=j.est[c].jogos||0; st.gols+=j.est[c].gols||0; st.ast+=j.est[c].ast||0;
+                        st.sg+=j.est[c].sg||0; st.ca+=j.est[c].ca||0; st.cv+=j.est[c].cv||0;
+                        let m = j.est[c].media!==undefined ? parseFloat(j.est[c].media) : (j.est[c].jogos ? (j.est[c].somaNotas||0)/j.est[c].jogos : 0);
+                        sumMed+=m*(j.est[c].jogos||1); totJ+=(j.est[c].jogos||1);
+                    }
+                });
+                st.media = totJ ? (sumMed/totJ).toFixed(1) : '0.0'; return st;
+            });
+            pStats.sort((a,b) => {
+                let vA, vB;
+                if(['pos','sobrenome','ovr'].includes(sortStatsField)){
+                    vA=a.j[sortStatsField]; vB=b.j[sortStatsField];
+                    if(sortStatsField==='sobrenome'){vA=vA.toLowerCase();vB=vB.toLowerCase();}
+                    else if(sortStatsField==='ovr'){vA=+vA;vB=+vB;}
+                    else{const o=["GOL","LE","ZAG","LD","VOL","ME","MC","MEI","MD","PE","ATA","PD"];vA=o.indexOf(vA);vB=o.indexOf(vB);}
+                } else {
+                    vA=sortStatsField==='media'?+a.media:a[sortStatsField];
+                    vB=sortStatsField==='media'?+b.media:b[sortStatsField];
+                }
+                return vA<vB?(sortStatsDir==='asc'?-1:1):vA>vB?(sortStatsDir==='asc'?1:-1):0;
+            });
+            if(!editComp && comps.length) editComp = comps[0];
+
+            let html = `<div style="max-width:1200px;margin:0 auto;"><div class="filtros-container" style="text-align:center;margin-bottom:15px;display:block;padding:12px;"><div style="color:#fbbf24;font-weight:700;margin-bottom:10px;text-transform:uppercase;font-size:0.85em;">Filtros de Competição</div><div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">${comps.map(c => `<button class="filtro-btn ${compsSelecionadas.includes(c)?'ativo':''}" onclick="toggleCompFilter('${c}')">${c}</button>`).join('')}</div></div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:20px;"><div class="metric-card" style="flex:1;min-width:100px;"><span class="metric-label">Jogos</span><span class="metric-val" style="color:#fff">${jg}</span></div><div class="metric-card" style="flex:1;min-width:100px;"><span class="metric-label">Vitórias</span><span class="metric-val" style="color:#10b981">${v}</span></div><div class="metric-card" style="flex:1;min-width:100px;"><span class="metric-label">Empates</span><span class="metric-val" style="color:#94a3b8">${e}</span></div><div class="metric-card" style="flex:1;min-width:100px;"><span class="metric-label">Derrotas</span><span class="metric-val" style="color:#ef4444">${d}</span></div><div class="metric-card" style="flex:1;min-width:100px;"><span class="metric-label">Gols Pró</span><span class="metric-val" style="color:#3b82f6">${gp}</span></div><div class="metric-card" style="flex:1;min-width:100px;"><span class="metric-label">Gols Contra</span><span class="metric-val" style="color:#f59e0b">${gc}</span></div><div class="metric-card" style="flex:1;min-width:100px;"><span class="metric-label">Saldo</span><span class="metric-val" style="color:#fff">${sg}</span></div></div>`;
+
+            if(!isRead) html += `<div style="text-align:center;margin-bottom:15px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;"><label style="color:#fbbf24;font-weight:700;">Editando Competição:</label><select id="stat-edit-comp" onchange="editComp=this.value; $('#rename-comp-input').value=this.value; renderizar()" style="padding:6px;border-radius:6px;background:#0f172a;color:#fff;border:1px solid #fbbf24;">${comps.map(c=>`<option value="${c}" ${c===editComp?'selected':''}>${c}</option>`).join('')}</select><input type="text" id="rename-comp-input" value="${editComp}" style="padding:6px;border-radius:6px;background:#0f172a;color:#fff;border:1px solid #fbbf24;width:150px;"><button onclick="renomearCompExtra()" style="background:#fbbf24;color:#000;border:none;padding:6px;border-radius:6px;cursor:pointer;font-weight:700;" title="Renomear">✏️</button><button onclick="excluirCompExtra()" style="background:#b91c1c;color:#fff;border:none;padding:6px;border-radius:6px;cursor:pointer;font-weight:700;" title="Excluir">🗑️</button><button onclick="adicionarCompExtra()" style="background:#15803d;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:700;margin-left:10px;">+ Nova Comp.</button></div>`;
+
+            const th = (f, l) => `<th onclick="sortStats('${f}')" style="cursor:pointer;white-space:nowrap;${f==='sobrenome'?'text-align:left':''}">${l} ${sortStatsField===f?(sortStatsDir==='desc'?'⬇️':'⬆️'):''}</th>`;
+            let cgEst=`<colgroup><col width="60"><col width="auto"><col width="60"><col width="60"><col width="50"><col width="75"><col width="50"><col width="40"><col width="40"><col width="60"></colgroup>`;
+            
+            html += `<div class="table-container"><table class="table-view" style="table-layout:fixed;width:100%;">${cgEst}<thead><tr>${th('pos','Posição')}${th('sobrenome','Jogador')}${th('ovr','OVR')}${th('jogos','Jogos')}${th('gols','Gols')}${th('ast','ASSIST.')}${th('sg','SSG')}${th('ca','🟨')}${th('cv','🟥')}${th('media','Média')}</tr></thead><tbody>`;
+
+            html += pStats.map(st => {
+                let j = st.j, i = s.jogadores.indexOf(j);
+                if(!isRead) {
+                    let jEst = (j.est && j.est[editComp]) ? j.est[editComp] : {jogos:0, gols:0, ast:0, sg:0, ca:0, cv:0, media:0};
+                    let med = jEst.media !== undefined ? parseFloat(jEst.media).toFixed(1) : (jEst.jogos ? (jEst.somaNotas/jEst.jogos).toFixed(1) : '0.0');
+                    const inp = f => `<input type="number" value="${jEst[f]||0}" style="width:50px;text-align:center;background:#0f172a;color:#fbbf24;border:1px solid #334155;border-radius:4px;padding:4px;" onblur="salvarStat(${i},'${editComp}','${f}',this.value)">`;
+                    const inpMed = `<input type="number" step="0.1" min="5.0" max="10.0" value="${med}" style="width:60px;text-align:center;background:#0f172a;color:#fbbf24;border:1px solid #334155;border-radius:4px;padding:4px;" onblur="salvarStat(${i},'${editComp}','media',this.value)">`;
+                    return `<tr><td><div class="pos-stat-box" style="font-size:.9em;padding:2px 4px;">${j.pos}</div></td><td class="nome-col">${j.primeiroNome} <span>${j.sobrenome}</span></td><td><div class="stat-box ${getBg(j.ovr)}" style="display:inline-block;padding:2px 6px;">${j.ovr}${renderDeltaSpan(j,'ovr',null)}</div></td><td>${inp('jogos')}</td><td>${inp('gols')}</td><td>${inp('ast')}</td><td>${inp('sg')}</td><td>${inp('ca')}</td><td>${inp('cv')}</td><td>${inpMed}</td></tr>`;
+                } else {
+                    return `<tr><td><div class="pos-stat-box" style="font-size:.9em;padding:2px 4px;">${j.pos}</div></td><td class="nome-col">${j.primeiroNome} <span>${j.sobrenome}</span></td><td><div class="stat-box ${getBg(j.ovr)}" style="display:inline-block;padding:2px 6px;">${j.ovr}${renderDeltaSpan(j,'ovr',null)}</div></td><td style="color:${st.jogos==0?'#475569':''}">${st.jogos}</td><td style="color:${st.gols==0?'#475569':''}">${st.gols}</td><td style="color:${st.ast==0?'#475569':''}">${st.ast}</td><td style="font-weight:bold">${fSg(st.sg)}</td><td style="color:${st.ca==0?'#475569':''}">${st.ca}</td><td style="color:${st.cv==0?'#475569':''}">${st.cv}</td><td style="font-weight:700;color:#fbbf24;">${st.media}</td></tr>`;
+                }
+            }).join(''); return html + `</tbody></table></div></div>`;
+        }
+
+        const abrirModalCompra = i => { consolidarEdicoes(); const j=getSeason().mercado[i]; $('#modal-compra-idx').value=i; $('#modal-compra-nome').innerHTML=`${j.primeiroNome} <span style="color:#fbbf24;">${j.sobrenome}</span>`; $('#modal-compra-valor').value=j.valor||0; $('#modal-compra-salario').value=j.salario||0; $('#modal-compra-anos').value=j.contAnos||1; $('#modal-compra-meses').value=j.contMeses||0; $('#modal-compra').style.display='flex'; };
+        const fecharModalCompra = () => $('#modal-compra').style.display='none';
+        function confirmarCompra() { const idx=$('#modal-compra-idx').value; if(idx==="")return; const s=getSeason(),j=s.mercado[+idx]; s.verba-=+$('#modal-compra-valor').value||0; s.salario-=+$('#modal-compra-salario').value||0; j.salario=+$('#modal-compra-salario').value||0; j.contAnos=+$('#modal-compra-anos').value||0; j.contMeses=+$('#modal-compra-meses').value||0; j.status="Não Relacionado"; j.num="-"; j.situacao="Elenco"; s.jogadores.push(j); s.mercado.splice(+idx,1); salvarDados(); fecharModalCompra(); renderizar(); }
+
+        const abrirModalVenda = i => { consolidarEdicoes(); const j=getSeason().jogadores[i]; $('#modal-venda-idx').value=i; $('#modal-venda-nome').innerHTML=`${j.primeiroNome} <span style="color:#fbbf24;">${j.sobrenome}</span>`; $('#modal-venda-valor').value=j.valor||0; $('#modal-venda').style.display='flex'; };
+        const fecharModalVenda = () => $('#modal-venda').style.display='none';
+        function confirmarVenda() { const idx=$('#modal-venda-idx').value; if(idx===""||!confirm("Vender este jogador permanentemente?"))return; const s=getSeason(),j=s.jogadores[+idx]; s.verba+=+$('#modal-venda-valor').value||0; s.salario+=+j.salario||0; s.jogadores.splice(+idx,1); if(s.lineup)for(let k in s.lineup)if(s.lineup[k]===j)delete s.lineup[k]; salvarDados(); fecharModalVenda(); renderizar(); }
+
+        const abrirModalPromover = i => { consolidarEdicoes(); const j=getSeason().jogadores[i]; $('#modal-promover-idx').value=i; $('#modal-promover-nome').innerHTML=`${j.primeiroNome} <span style="color:#fbbf24;">${j.sobrenome}</span>`; $('#modal-promover-valor').value=j.valor||0; $('#modal-promover-salario').value=j.salario||0; $('#modal-promover-multa').value=j.multa||0; $('#modal-promover').style.display='flex'; };
+        const fecharModalPromover = () => $('#modal-promover').style.display='none';
+        function confirmarPromocao() { const idx=$('#modal-promover-idx').value; if(idx==="")return; const j=getSeason().jogadores[+idx]; j.salario=+$('#modal-promover-salario').value||0; j.valor=+$('#modal-promover-valor').value||0; j.multa=+$('#modal-promover-multa').value||0; j.contAnos=+$('#modal-promover-anos').value||3; j.contMeses=+$('#modal-promover-meses').value||0; j.status=$('#modal-promover-status').value; j.situacao="Elenco"; salvarDados(); fecharModalPromover(); renderizar(); }
+
+        const removerDoCampo = k => { delete getSeason().lineup[k]; salvarDados(); renderizar(); };
+        const formacoesTaticas = {
+            "4-3-3": {slots:{"GOL":"bottom:2%;left:50%","LE":"bottom:25%;left:15%","ZAG1":"bottom:22%;left:38%","ZAG2":"bottom:22%;left:62%","LD":"bottom:25%;left:85%","MC1":"bottom:47%;left:30%","MEI":"bottom:51%;left:50%","MC2":"bottom:47%;left:70%","PE":"bottom:72%;left:20%","ATA":"bottom:77%;left:50%","PD":"bottom:72%;left:80%"}},
+            "4-4-2": {slots:{"GOL":"bottom:2%;left:50%","LE":"bottom:25%;left:15%","ZAG1":"bottom:22%;left:38%","ZAG2":"bottom:22%;left:62%","LD":"bottom:25%;left:85%","ME":"bottom:50%;left:15%","MC1":"bottom:47%;left:38%","MC2":"bottom:47%;left:62%","MD":"bottom:50%;left:85%","ATA1":"bottom:75%;left:38%","ATA2":"bottom:75%;left:62%"}},
+            "4-2-3-1": {slots:{"GOL":"bottom:2%;left:50%","LE":"bottom:25%;left:15%","ZAG1":"bottom:22%;left:38%","ZAG2":"bottom:22%;left:62%","LD":"bottom:25%;left:85%","VOL1":"bottom:38%;left:38%","VOL2":"bottom:38%;left:62%","MEI":"bottom:55%;left:50%","PE":"bottom:72%;left:25%","PD":"bottom:72%;left:75%","ATA":"bottom:77%;left:50%"}},
+            "4-1-4-1": {slots:{"GOL":"bottom:2%;left:50%","LE":"bottom:25%;left:15%","ZAG1":"bottom:22%;left:38%","ZAG2":"bottom:22%;left:62%","LD":"bottom:25%;left:85%","VOL":"bottom:38%;left:50%","ME":"bottom:55%;left:15%","MC1":"bottom:47%;left:35%","MC2":"bottom:47%;left:65%","MD":"bottom:55%;left:85%","ATA":"bottom:75%;left:50%"}},
+            "3-5-2": {slots:{"GOL":"bottom:2%;left:50%","ZAG1":"bottom:22%;left:25%","ZAG2":"bottom:20%;left:50%","ZAG3":"bottom:22%;left:75%","VOL1":"bottom:38%;left:35%","VOL2":"bottom:38%;left:65%","ME":"bottom:55%;left:15%","MEI":"bottom:52%;left:50%","MD":"bottom:55%;left:85%","ATA1":"bottom:75%;left:38%","ATA2":"bottom:75%;left:62%"}},
+            "5-3-2": {slots:{"GOL":"bottom:2%;left:50%","ADE":"bottom:25%;left:12%","ZAG1":"bottom:20%;left:30%","ZAG2":"bottom:18%;left:50%","ZAG3":"bottom:20%;left:70%","ADD":"bottom:25%;left:88%","MC1":"bottom:47%;left:30%","VOL":"bottom:42%;left:50%","MC2":"bottom:47%;left:70%","ATA1":"bottom:75%;left:38%","ATA2":"bottom:75%;left:62%"}},
+            "4-3-3 (Contenção)": {slots:{"GOL":"bottom:2%;left:50%","LE":"bottom:25%;left:15%","ZAG1":"bottom:22%;left:38%","ZAG2":"bottom:22%;left:62%","LD":"bottom:25%;left:85%","VOL":"bottom:38%;left:50%","MC1":"bottom:47%;left:30%","MC2":"bottom:47%;left:70%","PE":"bottom:72%;left:20%","ATA":"bottom:77%;left:50%","PD":"bottom:72%;left:80%"}},
+            "4-3-3 (Ofensivo)": {slots:{"GOL":"bottom:2%;left:50%","LE":"bottom:25%;left:15%","ZAG1":"bottom:22%;left:38%","ZAG2":"bottom:22%;left:62%","LD":"bottom:25%;left:85%","MC1":"bottom:44%;left:35%","MC2":"bottom:44%;left:65%","MEI":"bottom:56%;left:50%","PE":"bottom:72%;left:20%","ATA":"bottom:77%;left:50%","PD":"bottom:72%;left:80%"}},
+            "4-3-3 (Falso 9)": {slots:{"GOL":"bottom:2%;left:50%","LE":"bottom:25%;left:15%","ZAG1":"bottom:22%;left:38%","ZAG2":"bottom:22%;left:62%","LD":"bottom:25%;left:85%","MC1":"bottom:42%;left:30%","MC2":"bottom:42%;left:70%","MEI":"bottom:54%;left:50%","PE":"bottom:72%;left:20%","SA":"bottom:68%;left:50%","PD":"bottom:72%;left:80%"}}
+        };
+        const mudarFormacao = nf => { const s=getSeason(); s.formacao=nf; const nl={}, c=formacoesTaticas[nf]; for(let p in s.lineup)if(c.slots[p])nl[p]=s.lineup[p]; s.lineup=nl; salvarDados(); renderizar(); };
+        const salvarLineup = n => { const s=getSeason(); s.lineupsSalvos=s.lineupsSalvos||{}; s.lineupsSalvos[n]={formacao:s.formacao||'4-3-3',jogadores:JSON.parse(JSON.stringify(s.lineup||{}))}; salvarDados(); alert(`Escalação '${n}' salva!`); renderizar(); };
+        const carregarLineup = n => { if(n==='atual')return; const s=getSeason(), l=s.lineupsSalvos?.[n]; if(!l){alert(`Nenhuma escalação '${n}'.`);$('#select-lineup').value='atual';return;} s.formacao=l.formacao; const nl={}; for(let p in l.jogadores){let f=s.jogadores.find(j=>j.primeiroNome===l.jogadores[p].primeiroNome&&j.sobrenome===l.jogadores[p].sobrenome);if(f)nl[p]=f;} s.lineup=nl; salvarDados(); renderizar(); setTimeout(()=>{if($('#select-lineup'))$('#select-lineup').value='atual';},100); };
+
+        function renderizarTaticas() {
+            const s=getSeason(), o=["GOL","LE","ZAG","LD","VOL","ME","MC","MEI","MD","PE","ATA","PD"], sts=[{k:'Titular',l:'TIT'},{k:'Reserva',l:'RES'},{k:'Não Relacionado',l:'N/R'}];
+            const cF=formacoesTaticas[s.formacao||'4-3-3'], l=s.lineup||{};
+            let inP=Object.values(l).map(j=>j.primeiroNome+j.sobrenome);
+            let sq = s.jogadores.filter(j=>j.situacao!=='Base'&&(!filtros.pos.length||filtros.pos.includes(j.pos))&&(!filtros.status.length||filtros.status.includes(j.status))&&!inP.includes(j.primeiroNome+j.sobrenome));
+            sq.sort((a,b)=>{let vA=sortTaticasField==='pos'?o.indexOf(a.pos):sortTaticasField==='sobrenome'?a.sobrenome.toLowerCase():a[sortTaticasField],vB=sortTaticasField==='pos'?o.indexOf(b.pos):sortTaticasField==='sobrenome'?b.sobrenome.toLowerCase():b[sortTaticasField];return vA<vB?(sortTaticasDir==='asc'?-1:1):vA>vB?(sortTaticasDir==='asc'?1:-1):0;});
+            const lH=sq.map(j=>{
+                let selSt = `<select onchange="getSeason().jogadores[${s.jogadores.indexOf(j)}].status=this.value;salvarDados();renderizar()" style="background:transparent;color:inherit;border:1px solid #334155;border-radius:4px;cursor:pointer;font-size:0.85em;padding:2px;"><option value="Titular" ${j.status==='Titular'?'selected':''}>TIT</option><option value="Reserva" ${j.status==='Reserva'?'selected':''}>RES</option><option value="Não Relacionado" ${j.status==='Não Relacionado'?'selected':''}>N/R</option></select>`;
+                return `<div class="taticas-list-item" draggable="true" ondragstart="dragT(event,'L',${s.jogadores.indexOf(j)})"><div>${j.pos}</div><div style="font-weight:700">${j.primeiroNome} ${j.sobrenome}</div><div>${j.idade}</div><div><div class="stat-box ${getBg(j.ovr)}" style="padding:2px 4px;border-radius:3px;">${j.ovr}</div></div><div><div class="stat-box ${getBg(j.pot)}" style="padding:2px 4px;border-radius:3px;">${j.pot}</div></div><div>${selSt}</div></div>`;
+            }).join('');
+            let sOVR={DEF:{s:0,c:0},MEI:{s:0,c:0},ATA:{s:0,c:0}};
+            const mH=Object.keys(cF.slots).map(k=>{
+                if(l[k]){
+                    let sg=['GOL','ZAG','LE','LD'].includes(l[k].pos)?'DEF':['VOL','MC','MEI','ME','MD'].includes(l[k].pos)?'MEI':'ATA'; sOVR[sg].s+=l[k].ovr; sOVR[sg].c++;
+                    return`<div class="pos-marker occupied" style="${cF.slots[k]}" draggable="true" ondragstart="dragT(event,'P','${k}')" ondrop="dropT(event,'${k}')" ondragover="allowDrop(event)">
+                    <div style="width:10px;height:10px;border-radius:50%;background:${getAdp(l[k].pos,k)};position:absolute;top:5px;left:5px;" title="${l[k].pos} no slot ${k}"></div>
+                    <button onclick="removerDoCampo('${k}')" style="position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer">✕</button>
+                    <div class="name">${l[k].primeiroNome[0]}. ${l[k].sobrenome}</div><div class="ovr">${l[k].ovr}</div><div class="pos">${l[k].pos}</div></div>`;
+                }
+                return `<div class="pos-marker" style="${cF.slots[k]}" ondrop="dropT(event,'${k}')" ondragover="allowDrop(event)">${k.replace(/\d/g,'')}</div>`;
+            }).join('');
+            const sB = `<div class="taticas-sector-bars"><span>⚔️ ATA: ${sOVR.ATA.c?Math.round(sOVR.ATA.s/sOVR.ATA.c):0}</span><span>🧭 MEI: ${sOVR.MEI.c?Math.round(sOVR.MEI.s/sOVR.MEI.c):0}</span><span>🛡️ DEF: ${sOVR.DEF.c?Math.round(sOVR.DEF.s/sOVR.DEF.c):0}</span></div>`;
+            const sideF = o.map(p=>`<button class="filtro-btn ${filtros.pos.includes(p)?'ativo':''}" onclick="toggleFiltro('pos','${p}')">${p}</button>`).join('')+`<div style="border-top:1px solid #2d3748;margin:5px 0;width:100%"></div>`+sts.map(st=>`<button class="filtro-btn ${filtros.status.includes(st.k)?'ativo':''}" onclick="toggleFiltro('status','${st.k}')">${st.l}</button>`).join('');
+            return `<div style="width:100%;max-width:1200px;margin:0 auto;"><div style="display:flex;justify-content:center;gap:15px;margin-bottom:15px;background:#151d2e;padding:10px;border-radius:10px;border:1px solid #2d3748;"><div style="display:flex;align-items:center;gap:10px;"><label style="color:#fbbf24;font-weight:700;font-size:.9em;">Formação:</label><select onchange="mudarFormacao(this.value)" style="padding:5px;border-radius:5px;background:#0f172a;color:#fff;border:1px solid #334155;font-size:.9em;">${Object.keys(formacoesTaticas).map(f=>`<option value="${f}" ${(s.formacao||'4-3-3')===f?'selected':''}>${f}</option>`).join('')}</select></div><div style="display:flex;align-items:center;gap:8px;"><label style="color:#fbbf24;font-weight:700;font-size:.9em;">Escalação:</label><select id="select-lineup" onchange="carregarLineup(this.value)" style="padding:5px;border-radius:5px;background:#0f172a;color:#fff;border:1px solid #334155;font-size:.9em;"><option value="atual">Ações Rápidas...</option>${['Titular','Reserva','Opção 2','Opção 3'].map(o=>`<option value="${o}">Carregar ${o}</option>`).join('')}</select>${['Titular','Reserva','Opção 2','Opção 3'].map((o,i)=>`<button onclick="salvarLineup('${o}')" style="background:${['#15803d','#0284c7','#9333ea','#ea580c'][i]};color:#fff;border:none;padding:5px 8px;border-radius:5px;cursor:pointer;font-size:.75em;font-weight:700;" title="Salvar ${o}">💾 ${o.replace('Opção ','Op. ')}</button>`).join('')}</div></div><div class="taticas-wrapper" style="padding:0;"><div class="taticas-filter-sidebar">${sideF}</div><div><div class="pitch-container"><div class="pitch-line" style="top:50%;left:0;width:100%;"></div><div class="center-circle"></div>${mH}</div>${sB}</div><div class="taticas-list"><div class="taticas-list-header"><div onclick="sortTaticas('pos')">Pos</div><div onclick="sortTaticas('sobrenome')">Jogador</div><div onclick="sortTaticas('idade')">Id</div><div onclick="sortTaticas('ovr')">OVR</div><div onclick="sortTaticas('pot')">POT</div><div onclick="sortTaticas('status')">ST</div></div>${lH||'<div style="grid-column:1/-1;text-align:center;padding:20px;color:#94a3b8">Nenhum jogador livre para a busca.</div>'}</div></div></div>`;
+        }
+
+        const alternarVisualizacao = () => { consolidarEdicoes(); modoTabela=!modoTabela; $('#btn-toggle-view').innerText=modoTabela?'🪟':'📄'; renderizar(); };
+        const ordenarPelaTabela = c => { consolidarEdicoes(); sortDir=$('#sort-select').value===c?(sortDir==='desc'?'asc':'desc'):'desc'; $('#sort-select').value=c; renderizar(); };
+        const baixarArquivo = (nome, conteudo, tipo) => {
+            const url=URL.createObjectURL(new Blob([conteudo],{type:tipo}));
+            const a=document.createElement('a'); a.href=url; a.download=nome; a.click();
+            setTimeout(()=>URL.revokeObjectURL(url),0);
+        };
+        const exportarJSON = () => baixarArquivo(`manager-fc-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(appData,null,2),'application/json');
+        const importarJSON = e => {
+            const file=e.target.files[0];
+            if(!file||!confirm('Restaurar este backup e substituir os dados atuais?')) { e.target.value=''; return; }
+            const r=new FileReader();
+            r.onload=ev=>{
+                try {
+                    const d=JSON.parse(ev.target.result);
+                    if(!Array.isArray(d?.elencos)||!d.elencos.length) throw new Error('Backup inválido');
+                    appData=normalizarDados(d); abaAtiva='jogadores';
+                    $$('.sidebar-menu a').forEach(el=>el.classList.remove('ativo')); $('#link-jogadores').classList.add('ativo');
+                    salvarDados(); renderizar(); alert('Backup restaurado com sucesso.');
+                } catch(error) {
+                    console.error(error); alert('Esse arquivo não é um backup válido do Manager FC.');
+                }
+                e.target.value='';
+            };
+            r.onerror=()=>{ alert('Não foi possível ler o backup.'); e.target.value=''; };
+            r.readAsText(file,'UTF-8');
+        };
+        
+        function inicializarBases(j) { j.baseOvr=j.baseOvr??+j.ovr; j.basePot=j.basePot??+j.pot; j.potMin=j.potMin??+(j.pot-5); j.potMax=j.potMax??+j.pot; j.basePotMin=j.basePotMin??+j.potMin; j.basePotMax=j.basePotMax??+j.potMax; j.baseS=j.baseS??[...j.s]; }
+        const renderDeltaSpan = (j,c,sI) => { if(['idade','alt','contAnos','contMeses','multa','valor','salario'].includes(c)) return ''; inicializarBases(j); let b=sI!==null?j.baseS[sI]:(c==='ovr'?j.baseOvr:c==='potMin'?j.basePotMin:c==='potMax'?j.basePotMax:j.basePot); let d=(sI!==null?j[c][sI]:+j[c])-b; return d>0?`<span style="color:#022c22;font-size:.75em;font-weight:900;margin-left:2px;" title="Variação">+${d}</span>`:d<0?`<span style="color:#450a0a;font-size:.75em;font-weight:900;margin-left:2px;" title="Variação">${d}</span>`:''; };
+        const transformarEmInput = (el,i,c,sI,v) => { if(el.querySelector('input'))return; el.innerHTML=`<input type="number" value="${v}" style="width:35px;text-align:center;background:#0f172a;color:#fbbf24;border:1px solid #fbbf24;border-radius:4px;" onblur="salvarEdicaoManual(${i},'${c}',${sI},this.value)" onkeydown="if(event.key==='Enter')this.blur();" autofocus>`; el.querySelector('input').focus(); el.querySelector('input').select(); };
+        function salvarEdicaoManual(i,c,sI,vS) { consolidarEdicoes(); let v=+vS; if(isNaN(v))return renderizar(); const j=(abaAtiva==='mercado'?getSeason().mercado:getSeason().jogadores)[i]; inicializarBases(j); if(sI!==null){j[c][sI]=v;j.baseS[sI]=v;}else{j[c]=v;if(c==='ovr')j.baseOvr=v;if(c==='pot')j.basePot=v;if(c==='potMin')j.basePotMin=v;if(c==='potMax')j.basePotMax=v;} salvarDados(); renderizar(); }
+        const sortTaticas = f => { sortTaticasDir=sortTaticasField===f?(sortTaticasDir==='asc'?'desc':'asc'):'desc'; sortTaticasField=f; renderizar(); };
+        const dragT = (ev,t,id) => ev.dataTransfer.setData("s", t+':'+id);
+        const dropT = (ev,k) => { ev.preventDefault(); let [t,id]=ev.dataTransfer.getData("s").split(':'); const s=getSeason(); if(t==='L') s.lineup[k]=s.jogadores[id]; else if(t==='P'){let tmp=s.lineup[k];s.lineup[k]=s.lineup[id];if(tmp)s.lineup[id]=tmp;else delete s.lineup[id];} salvarDados();renderizar(); };
+        const csvCell = value => { const text=String(value??''); return /[",\n\r]/.test(text)?`"${text.replace(/"/g,'""')}"`:text; };
+        const exportarCSV = () => {
+            const l=(abaAtiva==='mercado'?getSeason().mercado:getSeason().jogadores).filter(j=>abaAtiva==='base'?j.situacao==='Base':(abaAtiva==='jogadores'?j.situacao!=='Base':true));
+            if(!l.length)return alert('Não há jogadores nesta lista.');
+            const header=['Primeiro Nome','Sobrenome','Num','Pos','Status','Situação','Idade','Altura','Pé','Contrato Anos','Contrato Meses','Multa','Valor','Salário','OVR','POT','Dribles','Pé Ruim','S1','S2','S3','S4','S5','S6'];
+            const rows=l.map(j=>[j.primeiroNome,j.sobrenome,j.num,j.pos,j.status,j.situacao,j.idade,j.alt,j.pe,j.contAnos,j.contMeses,j.multa,j.valor,j.salario,j.ovr,j.pot,j.dr,j.pr,...j.s]);
+            const csv='\uFEFF'+[header,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n');
+            baixarArquivo(`${abaAtiva}-${new Date().toISOString().slice(0,10)}.csv`,csv,'text/csv;charset=utf-8');
+        };
+        const toggleFiltroRenovacao = () => { consolidarEdicoes(); filtroRenovacaoAtivo=!filtroRenovacaoAtivo; renderizar(); };
+        
+        function avancarTemporada() {
+            const e=appData.elencos[appData.indiceAtivo]; if(!confirm(`Avançar temporada para ${e.nome}?\n\n1. Cria Snapshot no Histórico\n2. +1 Idade, -1 Ano Contrato\n3. OVR/POT atuais viram Base\n4. Estatísticas Resetadas`))return;
+            consolidarEdicoes(); let cs=e.temporadas[e.temporadaAtiva];
+            const semImagem=j=>{const copia=cloneData(j);delete copia.img;return copia;};
+            e.historico.push({nome:cs.nome+" (Final)",data:new Date().toLocaleDateString(),jogadores:cs.jogadores.map(semImagem),mercado:cs.mercado.map(semImagem),calendario:cloneData(cs.calendario)});
+            let ns=cloneData(cs); ns.nome="Temporada "+(e.temporadas.length+1);
+            cs.jogadores.forEach(j=>delete j.img); cs.mercado.forEach(j=>delete j.img);
+            ['jogadores','mercado'].forEach(a=>ns[a]?.forEach(j=>{j.baseOvr=+j.ovr;j.basePot=+j.pot;if(j.potMin)j.basePotMin=+j.potMin;if(j.potMax)j.basePotMax=+j.potMax;j.idade=+j.idade+1;if(+j.contAnos>0)j.contAnos=+j.contAnos-1; j.est={};}));
+            ns.calendario=[]; e.temporadas.push(ns); e.temporadaAtiva=e.temporadas.length-1; salvarDados(); renderizar(); alert("Temporada avançada!");
+        }
+
+        const defSvg = `<svg viewBox="0 0 24 24" width="35" height="35" fill="#475569"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+        const tblSvg = `<svg viewBox="0 0 24 24" width="24" height="24" fill="#475569" style="vertical-align:middle;margin-right:5px"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+
+        function renderizar() {
+            const c=$('#elenco-container'), s=getSeason(), elAtv=appData.elencos[appData.indiceAtivo];
+            $('#squad-select').innerHTML=appData.elencos.map((e,i)=>`<option value="${i}" ${i===appData.indiceAtivo?'selected':''}>${e.nome}</option>`).join('');
+            if($('#season-select'))$('#season-select').innerHTML=elAtv.temporadas.map((t,i)=>`<option value="${i}" ${i===elAtv.temporadaAtiva?'selected':''}>${t.nome}</option>`).join('');
+            $('#main-title').innerHTML=modoEdicao?`<input type="text" id="edit-squad-name" value="${elAtv.nome}" style="text-align:center;background:transparent;color:#fbbf24;border:none;border-bottom:2px solid #fbbf24;font-size:1em;width:300px;">`:elAtv.nome;
+            
+            const isO=abaAtiva==='calendario'||abaAtiva==='historico'||abaAtiva==='taticas';
+            const hasListActions=['jogadores','mercado','base'].includes(abaAtiva);
+            $('.fixed-buttons').style.display=hasListActions?'flex':'none';
+            $('#filtros-container').style.display=isO?'none':'block'; $('#dashboard').style.display=(isO||abaAtiva==='estatisticas')?'none':'grid';
+            c.classList.toggle('grid',!modoTabela&&!isO&&abaAtiva!=='estatisticas');
+            if($('.sort-area')) $('.sort-area').style.display=abaAtiva==='estatisticas'?'none':'flex';
+            
+            if($('#btn-adicionar')) $('#btn-adicionar').style.display=(modoEdicao&&(abaAtiva==='jogadores'||abaAtiva==='mercado'||abaAtiva==='base'))?'flex':'none';
+            if($('#btn-excluir-tudo')) $('#btn-excluir-tudo').style.display=(modoEdicao&&(abaAtiva==='jogadores'||abaAtiva==='mercado'||abaAtiva==='base'))?'flex':'none';
+            if($('#btn-avancar-temporada')) $('#btn-avancar-temporada').style.display=(abaAtiva==='jogadores')?'flex':'none';
+            $('.fixed-buttons-bottom').style.display=(abaAtiva==='jogadores'||(modoEdicao&&hasListActions))?'flex':'none';
+
+            if(abaAtiva==='calendario')return c.innerHTML=renderizarCalendario();
+            if(abaAtiva==='historico')return c.innerHTML=renderizarAbaHistorico();
+            if(abaAtiva==='taticas')return c.innerHTML=renderizarTaticas();
+            if(abaAtiva==='estatisticas')return c.innerHTML=renderizarEstatisticas();
+
+            const tm=$('#search-input').value.toLowerCase(), srt=$('#sort-select').value;
+            if($('#btn-filtro-renovacao'))$('#btn-filtro-renovacao').classList.toggle('ativo',filtroRenovacaoAtivo);
+
+            const pO=["GOL","LE","ZAG","LD","VOL","ME","MC","MEI","MD","PE","ATA","PD"];
+            const sO=abaAtiva==='estatisticas'?["Elenco","Emprest. - IN"]:(abaAtiva==='jogadores'?["Elenco","Emprest. - IN","Emprest. - OUT"]:(abaAtiva==='base'?["Base"]:["Observação","Empréstimo","Transferência"]));
+            const stO=abaAtiva==='mercado'?["Prioridade","Alternativa","Fim de Contrato"]:["Titular","Reserva","Não Relacionado"];
+
+            const btnL = t => `<button class="filtro-btn" style="border:none;background:transparent;padding:0 5px;font-size:1.1em;margin-right:5px;" onclick="filtros['${t}']=[];renderizar()" title="Limpar">✖️</button>`;
+            $('#filtro-pos').innerHTML=`${btnL('pos')}<span class="filtro-titulo">Posição:</span>`+pO.map(o=>`<button class="filtro-btn ${filtros.pos.includes(o)?'ativo':''}" onclick="toggleFiltro('pos','${o}')">${o}</button>`).join('');
+            $('#filtro-sit').innerHTML=abaAtiva==='base'?'':`${btnL('sit')}<span class="filtro-titulo">Situação:</span>`+sO.map(o=>`<button class="filtro-btn ${filtros.sit.includes(o)?'ativo':''}" onclick="toggleFiltro('sit','${o}')">${o}</button>`).join('');
+            $('#filtro-status').innerHTML=`${btnL('status')}<span class="filtro-titulo">Status:</span>`+stO.map(o=>`<button class="filtro-btn ${filtros.status.includes(o)?'ativo':''}" onclick="toggleFiltro('status','${o}')">${o}</button>`).join('');
+            
+            $('#filtro-pos').className = 'filtro-linha' + (filtros.pos.length ? ' ativo-linha' : '');
+            $('#filtro-sit').className = 'filtro-linha' + (filtros.sit.length ? ' ativo-linha' : '');
+            $('#filtro-sit').style.display=abaAtiva==='base'?'none':'flex';
+            $('#filtro-status').className = 'filtro-linha' + (filtros.status.length ? ' ativo-linha' : '');
+
+            const srcArr = abaAtiva==='mercado'?s.mercado:s.jogadores;
+            let f=srcArr.filter(j=>(abaAtiva==='base'?j.situacao==='Base':(abaAtiva==='jogadores'?j.situacao!=='Base':true))&&(!filtros.pos.length||filtros.pos.includes(j.pos))&&(!filtros.sit.length||filtros.sit.includes(j.situacao))&&(!filtros.status.length||filtros.status.includes(j.status))&&(`${j.primeiroNome} ${j.sobrenome}`.toLowerCase().includes(tm))&&(!filtroRenovacaoAtivo||(+j.contAnos===0&&+j.contMeses<=6)));
+            if(srt!=='none')f.sort((a,b)=>{let A=srt==='pos'?pO.indexOf(a.pos):srt==='sobrenome'?a.sobrenome.toLowerCase():+a[srt],B=srt==='pos'?pO.indexOf(b.pos):srt==='sobrenome'?b.sobrenome.toLowerCase():+b[srt];return A<B?(sortDir==='asc'?-1:1):A>B?(sortDir==='asc'?1:-1):0;});
+            
+            renderizarDashboard(f);
+            
+            if(modoTabela){
+                const mapSt = {'Titular':'TIT','Reserva':'RES','Não Relacionado':'N/R'};
+                const colG = `<colgroup>${(modoEdicao||abaAtiva==='mercado'||abaAtiva==='base')?'<col width="60">':''}<col width="75"><col><col width="60"><col width="65"><col width="65"><col width="100"><col width="100"><col width="100"><col width="110"><col width="75"></colgroup>`;
+                c.innerHTML=`<div class="table-container"><table class="table-view">${colG}<thead><tr>${(modoEdicao||abaAtiva==='mercado'||abaAtiva==='base')?'<th>Ação</th>':''}${['pos','sobrenome','idade','ovr','pot','multa','valor','salario'].map(x=>`<th ${['pos','sobrenome','idade','ovr','pot','valor','salario'].includes(x)?`style="cursor:pointer;" onclick="ordenarPelaTabela('${x}')"`:''}>${x==='pos'?'POSIÇÃO':x.toUpperCase()}${srt===x?(sortDir==='desc'?' ⬇️':' ⬆️'):''}</th>`).join('')}<th>Situação</th><th>Status</th></tr></thead><tbody>`+
+                f.map(j=>{inicializarBases(j); const i=srcArr.indexOf(j), al=(+j.contAnos===0&&+j.contMeses<=6), stHtml=abaAtiva==='jogadores'?`<span style="font-weight:700;font-size:0.9em">${mapSt[j.status]||'N/R'}</span>`:`<span style="font-size:1.2em;">${getStatusEmoji(j.status)}</span>`, tblImg=j.img?`<img src="${j.img}" style="width:24px;height:24px;vertical-align:middle;object-fit:contain;margin-right:5px;border-radius:4px">`:tblSvg;return`<tr class="${al?'alerta-contrato':''}">${(modoEdicao||abaAtiva==='mercado'||abaAtiva==='base')?`<td>${modoEdicao?`<button style="background:transparent;border:none;cursor:pointer;font-size:1.2em;" onclick="excluirJogador(${i})">🗑️</button>${(abaAtiva==='jogadores'||abaAtiva==='base')?`<button style="background:transparent;border:none;cursor:pointer;font-size:1.2em;margin-left:5px;" onclick="abrirModalVenda(${i})">💰</button>`:''}`:(abaAtiva==='mercado'&&!modoEdicao)?`<button style="background:#15803d;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:700;font-size:.8em;" onclick="abrirModalCompra(${i})">🛒</button>`:(abaAtiva==='base'&&!modoEdicao)?`<button style="background:#3b82f6;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:700;font-size:.8em;" onclick="abrirModalPromover(${i})">⬆️</button>`:''}</td>`:''}<td><div class="pos-stat-box" style="font-size:.9em;padding:2px 4px;">${j.pos}</div></td><td class="nome-col">${tblImg}${j.primeiroNome} <span>${j.sobrenome}</span></td><td>${j.idade}</td><td><div class="stat-box ${getBg(j.ovr)}" style="display:inline-block;min-width:25px;padding:2px;">${j.ovr}${renderDeltaSpan(j,'ovr',null)}</div></td><td><div class="stat-box ${getBg(abaAtiva==='base'?j.potMax:j.pot)}" style="display:inline-block;min-width:25px;padding:2px;">${abaAtiva==='base'?`${j.potMin}-${j.potMax} ${renderDeltaSpan(j,'potMax',null)}`:`${j.pot}${renderDeltaSpan(j,'pot',null)}`}</div></td><td>${formatMoney(j.multa)}</td><td>${formatMoney(j.valor)}</td><td>${formatMoney(j.salario)}</td><td><div class="status-faixa" style="margin:0;padding:2px 4px;font-size:.75em;background:${cSit[j.situacao]||'#15803d'}">${j.situacao}</div></td><td>${stHtml}</td></tr>`}).join('')+`</tbody></table></div>`;
+            }else{
+                c.innerHTML=f.map(j=>{inicializarBases(j); const i=srcArr.indexOf(j), al=(+j.contAnos===0&&+j.contMeses<=6), lb=j.pos==='GOL'?['ELA','MAN','CHU','REF','VEL','POS']:['RIT','FIN','PAS','CON','DEF','FIS'];
+                const bS=(cp,v,mn,mx)=>`<div style="display:flex;justify-content:center;align-items:center;gap:5px;margin-top:2px;"><button class="btn-inc btn-square" onclick="alterarValor(${i},'${cp}',-1,null,${mn},${mx})">-</button><span style="font-weight:900;cursor:pointer;" onclick="transformarEmInput(this,${i},'${cp}',null,${v})">${v}</span><button class="btn-inc btn-square" onclick="alterarValor(${i},'${cp}',1,null,${mn},${mx})">+</button>${renderDeltaSpan(j,cp,null)}</div>`;
+                const isM=abaAtiva==='mercado',stTxt=isM?j.status:({'Titular':'TIT','Reserva':'RES','Não Relacionado':'N/R'}[j.status]||'N/R'),stCls=isM?({'Prioridade':'c-pri','Alternativa':'c-alt','Fim de Contrato':'c-fim'}[j.status]||'c-neu'):'c-neu',pCls=j.pos==='GOL'?'c-gol':['ZAG','LE','LD'].includes(j.pos)?'c-def':['VOL','MC','MEI','MD','ME'].includes(j.pos)?'c-mid':'c-atk';
+                const imgH=`<div class="avatar-wrapper" ${modoEdicao?`onclick="abrirUpload(${i})"`:''}>${j.img?`<img src="${j.img}" class="avatar-img">`:defSvg}${modoEdicao?`<div class="avatar-edit-icon">📷</div>`:''}</div>`;
+                return`<div class="card ${modoEdicao?'card-edit':''} ${al?'alerta-contrato':''}" style="border-left:5px solid ${cSit[j.situacao]||'transparent'}" data-index="${i}">${modoEdicao?`<button class="btn-lixeira" onclick="excluirJogador(${i})">🗑️</button>`:''}${(modoEdicao&&(abaAtiva==='jogadores'||abaAtiva==='base'))?`<button class="btn-vender" onclick="abrirModalVenda(${i})">💰</button>`:''}${(!modoEdicao&&abaAtiva==='mercado')?`<button onclick="abrirModalCompra(${i})" style="position:absolute;top:5px;right:5px;background:#15803d;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-weight:700;cursor:pointer;font-size:.8em;z-index:10;">🛒 Comprar</button>`:''}${(!modoEdicao&&abaAtiva==='base')?`<button onclick="abrirModalPromover(${i})" style="position:absolute;top:5px;right:5px;background:#3b82f6;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-weight:700;cursor:pointer;font-size:.8em;z-index:10;">⬆️ Promover</button>`:''}${modoEdicao?`<select data-field="situacao" class="compact-select" style="margin-bottom:6px;">${sO.map(o=>`<option ${j.situacao===o?'selected':''}>${o}</option>`).join('')}</select><select data-field="status" class="compact-select" style="margin-bottom:6px;">${stO.map(o=>`<option ${j.status===o?'selected':''}>${o}</option>`).join('')}</select>`:`<div class="status-faixa" style="background:transparent;color:#94a3b8">${j.situacao}</div>`}<div class="header" style="flex-direction:column;gap:5px;align-items:stretch"><div style="display:flex;width:100%;align-items:center;gap:5px">${imgH}<div class="nome">${modoEdicao?`<input type="text" data-field="primeiroNome" class="name-input" value="${j.primeiroNome}">`:j.primeiroNome}</div><div class="sobrenome">${modoEdicao?`<input type="text" data-field="sobrenome" class="name-input" value="${j.sobrenome}">`:j.sobrenome}</div></div><div style="display:flex;width:100%;align-items:center"><div style="flex:1;text-align:left"><div class="pos-stat-box ${stCls}" style="border:none;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${stTxt}</div></div><div style="flex:1;text-align:center"><div class="pos-stat-box ${pCls}" style="border:none">${modoEdicao?`<select data-field="pos" style="width:55px;background:transparent;color:inherit;border:none;font-weight:inherit">${pO.map(o=>`<option ${j.pos===o?'selected':''}>${o}</option>`).join('')}</select>`:j.pos}</div></div><div style="flex:1;text-align:right"><div class="numero">${modoEdicao?`<input type="text" data-field="num" value="${j.num}" style="width:30px">`:'#'+j.num}</div></div></div></div><div class="ratings-container"><div class="rat-box ${getBg(j.ovr)}">OVR<br>${modoEdicao?bS('ovr',j.ovr,1,99):j.ovr+' '+renderDeltaSpan(j,'ovr',null)}</div><div class="rat-box ${getBg(abaAtiva==='base'?j.potMax:j.pot)}">POT<br>${abaAtiva==='base'?(modoEdicao?`<div style="display:flex;flex-direction:column;gap:1px;font-size:.85em">${bS('potMin',j.potMin,1,99)}${bS('potMax',j.potMax,1,99)}</div>`:`${j.potMin}-${j.potMax} ${renderDeltaSpan(j,'potMax',null)}`):(modoEdicao?bS('pot',j.pot,1,99):j.pot+' '+renderDeltaSpan(j,'pot',null))}</div></div><div class="phys-row">${modoEdicao?bS('idade',j.idade,1,99):j.idade+' anos'} <span style="color:#475569">|</span> ${modoEdicao?bS('alt',j.alt,1,220):j.alt+' cm'} <span style="color:#475569">|</span> ${modoEdicao?`<select data-field="pe" class="compact-select" style="width:55px">${['Dir.','Esq.'].map(o=>`<option ${j.pe===o?'selected':''}>${o}</option>`).join('')}</select>`:j.pe}</div><button class="btn-acc" onclick="toggleAcc(this)">▼ Contrato e Finanças</button><div class="acc-content"><div class="cont-box">Contrato: ${modoEdicao?`<div style="display:inline-flex;align-items:center;gap:2px;margin-left:5px"><input type="number" data-field="contAnos" value="${j.contAnos}" style="width:25px;margin:0">a <input type="number" data-field="contMeses" value="${j.contMeses}" style="width:25px;margin:0">m</div>`:j.contAnos+'a '+j.contMeses+'m'}</div><div class="finance-grid"><div class="dado-box">Multa:<br>${modoEdicao?`<input type="number" data-field="multa" value="${j.multa}" style="width:100%;box-sizing:border-box">`:formatMoney(j.multa)}</div><div class="dado-box">Valor:<br>${modoEdicao?`<input type="number" data-field="valor" value="${j.valor}" style="width:100%;box-sizing:border-box">`:formatMoney(j.valor)}</div><div class="dado-box">Salário:<br>${modoEdicao?`<input type="number" data-field="salario" value="${j.salario}" style="width:100%;box-sizing:border-box">`:formatMoney(j.salario)}</div></div></div><div class="extra-stats"><div class="stars-box">Dribles<br>${modoEdicao?`<select data-field="dr">${[1,2,3,4,5].map(n=>`<option value="${n}" ${j.dr===n?'selected':''}>${n} Estrela</option>`).join('')}</select>`:rSt(j.dr)}</div><div class="stars-box">P. Ruim<br>${modoEdicao?`<select data-field="pr">${[1,2,3,4,5].map(n=>`<option value="${n}" ${j.pr===n?'selected':''}>${n} Estrela</option>`).join('')}</select>`:rSt(j.pr)}</div></div><div class="stats-grid">${j.s.map((v,x)=>`<div class="stat-box ${getBg(v)}"><span style="font-size:.8em">${lb[x]}</span>${modoEdicao?`<div style="display:flex;justify-content:center;align-items:center;gap:3px;width:100%;padding:2px 0;"><button class="btn-inc btn-square" onclick="alterarValor(${i},'s',-1,${x},1,99)">-</button><span style="font-weight:900;cursor:pointer;" onclick="transformarEmInput(this,${i},'s',${x},${v})">${v}</span><button class="btn-inc btn-square" onclick="alterarValor(${i},'s',1,${x},1,99)">+</button>${renderDeltaSpan(j,'s',x)}</div>`:`<span style="font-weight:900;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:2px;">${v}${renderDeltaSpan(j,'s',x)}</span>`}</div>`).join('')}</div></div>`}).join('');
+            }
+        }
+        const initialTab=location.hash.slice(1);
+        if(['jogadores','mercado','taticas','base','calendario','estatisticas','historico'].includes(initialTab)) abaAtiva=initialTab;
+        $$('.sidebar-menu a').forEach(el=>el.classList.toggle('ativo',el.id===`link-${abaAtiva}`));
+        renderizar();
+        window.ManagerApp = {
+            attachUser(userId, remoteState=null) {
+                const migrationCandidate=cloneData(appData);
+                const userStorageKey=`${STORAGE_KEY}:${userId}`;
+                const cachedState=readStoredJSON(userStorageKey);
+                currentUserId=userId;
+                activeStorageKey=userStorageKey;
+                appData=normalizarDados(cloneData(remoteState||cachedState||migrationCandidate));
+                localStorage.removeItem(STORAGE_KEY);
+                salvarDados(false);
+                renderizar();
+                return cloneData(appData);
+            },
+            detachUser({clearCache=true}={}) {
+                if(clearCache) localStorage.removeItem(activeStorageKey);
+                currentUserId=null;
+                activeStorageKey=STORAGE_KEY;
+                localStorage.removeItem(STORAGE_KEY);
+                appData=criarCarreiraInicial();
+            },
+            clearSignedOutCaches() {
+                const prefix=`${STORAGE_KEY}:`;
+                Object.keys(localStorage).filter(key=>key.startsWith(prefix)).forEach(key=>localStorage.removeItem(key));
+            },
+            getData:()=>cloneData(appData)
+        };
+        window.ManagerAuth?.initialize(window.ManagerApp);

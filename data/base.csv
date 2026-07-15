@@ -1,0 +1,16 @@
+Primeiro Nome,Sobrenome,Num,Pos,Status,Situação,Idade,Altura,Pé,Contrato Anos,Contrato Meses,Multa,Valor,Salário,OVR,POT,Dribles,Pé Ruim,S1,S2,S3,S4,S5,S6
+Yann,Granger,-,GOL,Titular,Base,17,190,Dir.,1,0,0,500000,1000,63,77,1,4,64,58,57,72,37,62
+Vincent,Lucas,-,ZAG,Titular,Base,14,173,Esq.,1,0,0,5000000,5000,57,87,2,4,56,28,38,44,56,57
+Bernd,Hoekstra,-,VOL,Titular,Base,15,187,Esq.,1,0,0,5000000,5000,57,93,2,4,50,39,48,52,56,63
+Axel,Rey,-,MEI,Titular,Base,15,175,Dir.,1,0,0,5000000,5000,59,90,4,3,69,49,52,62,37,48
+Bruno Henrique,Correia,-,PD,Titular,Base,16,175,Dir.,1,0,0,5000000,5000,62,94,4,3,81,54,50,65,31,53
+Yago,Magalhães,-,MD,Titular,Base,15,171,Esq.,1,0,0,5000000,5000,57,86,4,4,76,50,50,57,35,53
+Sven,De Vries,-,VOL,Titular,Base,15,180,Dir.,1,0,0,10000000,3300,56,93,2,1,55,40,49,49,55,63
+Tim,Peters,-,ZAG,Titular,Base,15,176,Esq.,1,0,0,10000000,3300,59,94,3,3,55,28,39,42,57,65
+Danny,Van Doorn,-,LE,Titular,Base,17,170,Esq.,1,0,0,1000000,5100,63,94,3,3,73,40,52,57,61,63
+Noah,Dumoulin,-,MC,Titular,Base,15,182,Esq.,1,0,0,5000000,5000,56,94,3,1,57,47,52,59,52,55
+Yohann,Grand,-,ZAG,Titular,Base,16,185,Dir.,1,0,0,5000000,5000,61,87,2,4,64,30,43,46,61,66
+Jair,Teixeira,-,MD,Titular,Base,14,157,Esq.,1,0,0,5000000,2800,51,91,4,2,73,41,45,55,32,47
+Nick,Verhoeven,-,VOL,Titular,Base,14,172,Dir.,3,0,0,1000000,2600,52,90,3,3,51,36,41,45,51,58
+Théo,Comte,-,VOL,Titular,Base,15,179,Esq.,3,0,0,1000000,3300,56,90,3,3,54,40,46,49,54,60
+Cristiano,Couto,-,MD,Titular,Base,17,170,Esq.,3,0,0,1000000,12000,69,90,2,2,85,54,60,68,37,60

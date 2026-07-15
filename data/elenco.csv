@@ -1,0 +1,48 @@
+Primeiro Nome,Sobrenome,Num,Pos,Status,Situação,Idade,Altura,Pé,Contrato Anos,Contrato Meses,Multa,Valor,Salário,OVR,POT,Dribles,Pé Ruim,S1,S2,S3,S4,S5,S6
+Samuel,Amo-Ameyaw,18,MEI,Reserva,Elenco,19,174,Esq.,4,0,0,3400000,17500,70,80,4,3,78,60,66,75,32,45
+Mathis,Amougou,15,MC,Reserva,Elenco,19,177,Dir.,5,0,0,4000000,21000,73,79,3,3,69,58,70,74,69,67
+Aarón,Anselmino,13,ZAG,Reserva,Emprest. - IN,20,186,Dir.,1,0,0,6000000,48000,74,81,3,5,69,45,62,64,75,72
+Stefan,Bajic,12,GOL,Não Relacionado,Elenco,24,188,Dir.,3,0,0,875000,6000,67,70,1,4,67,67,66,67,25,65
+Valentín,Barco,8,MC,Titular,Elenco,20,170,Esq.,4,0,0,21500000,38000,79,84,3,3,77,53,80,80,72,65
+Jean-Baptiste,Bosey,36,ATA,Não Relacionado,Emprest. - OUT,17,175,Dir.,4,0,0,625000,5000,61,76,3,3,80,56,47,72,21,45
+Ben,Chilwell,6,LE,Titular,Elenco,28,180,Esq.,2,0,0,9500000,49000,77,77,5,3,70,60,77,74,76,68
+Amadou,Cissé,45,ZAG,Não Relacionado,Emprest. - OUT,19,183,Dir.,3,0,0,975000,7000,64,73,2,2,60,23,42,48,66,60
+Soumalia,Coulibaly,-,ZAG,Não Relacionado,Emprest. - OUT,22,191,Esq.,4,0,0,4900000,23000,73,80,2,3,85,37,55,67,69,78
+Yaya,Diémé,34,PD,Não Relacionado,Emprest. - OUT,17,180,Esq.,4,0,0,900000,5000,65,76,3,3,69,62,61,66,35,50
+Pape,Diong,-,VOL,Não Relacionado,Emprest. - OUT,19,190,Dir.,4,0,0,1600000,9000,66,79,2,2,61,44,60,59,63,72
+Pape Demba,Diop,-,MC,Não Relacionado,Emprest. - OUT,22,182,Dir.,5,0,0,3600000,20000,71,79,2,3,77,60,69,70,66,69
+Guéla,Doué,22,LD,Titular,Elenco,23,187,Dir.,4,0,0,15000000,40000,79,82,3,5,73,52,71,73,78,78
+Ismaël,Doukouré,3,ZAG,Titular,Elenco,22,183,Dir.,3,0,0,15500000,34000,79,83,2,5,66,42,63,67,79,78
+Samir,El Mourabet,16,MC,Titular,Elenco,20,186,Esq.,5,0,0,6500000,25000,75,82,3,5,61,64,67,76,71,66
+Emanuel,Emegha,19,ATA,Reserva,Elenco,22,195,Esq.,3,0,0,22000000,49500,79,83,5,5,89,78,61,70,31,80
+Julio César,Enciso,10,MEI,Titular,Elenco,21,173,Dir.,4,0,0,12500000,33000,76,84,5,3,76,76,70,80,34,51
+David Datro,Fofana,21,ATA,Não Relacionado,Emprest. - IN,22,182,Dir.,1,0,0,5500000,60000,73,80,3,4,83,72,60,74,25,74
+Martial,Godo,11,PE,Titular,Elenco,22,169,Dir.,5,0,0,9500000,35000,75,82,5,4,87,63,67,81,38,58
+Lucas,Høgsberg,4,ZAG,Titular,Elenco,19,187,Dir.,5,0,0,6000000,24000,75,82,3,5,68,31,61,65,76,74
+Rafael,Luís,83,VOL,Não Relacionado,Emprest. - IN,20,188,Esq.,1,0,0,3200000,7000,70,81,2,3,60,52,66,69,66,71
+Milos,Luković,-,ATA,Não Relacionado,Emprest. - OUT,20,184,Dir.,3,0,0,2400000,15000,69,81,3,4,73,67,50,67,27,75
+Sékou,Mara,-,ATA,Não Relacionado,Emprest. - OUT,22,183,Dir.,4,0,0,3300000,25000,71,77,3,3,76,69,55,69,27,70
+Rayane,Messi,-,ME,Não Relacionado,Emprest. - OUT,18,175,Dir.,2,0,0,1700000,9000,67,80,3,3,73,58,59,76,25,53
+Diego,Moreira,7,PD,Titular,Elenco,21,179,Esq.,4,0,0,22000000,38000,80,84,5,3,90,68,70,85,64,69
+Junior,Mwanga,5,VOL,Reserva,Elenco,22,184,Dir.,2,0,0,3100000,27000,74,76,2,3,65,52,62,69,73,75
+Sebastian,Nanasi,20,MEI,Reserva,Elenco,23,178,Dir.,4,0,0,11500000,38000,77,82,4,3,71,67,73,81,33,63
+Tyrese,Noubissie,28,MC,Não Relacionado,Emprest. - OUT,16,188,Esq.,3,0,0,825000,5000,62,79,3,2,67,48,57,69,49,56
+Rabby,Nzingoula,-,VOL,Não Relacionado,Emprest. - OUT,20,182,Dir.,2,0,0,3200000,17000,71,78,3,3,68,49,56,67,71,75
+Andrew,Omobamidele,2,ZAG,Não Relacionado,Elenco,23,188,Dir.,4,0,0,4200000,30000,74,78,3,3,69,27,53,58,74,75
+Abdoul,Ouattara,17,PE,Reserva,Elenco,20,178,Dir.,4,0,0,4000000,21000,72,80,3,4,76,59,66,74,47,64
+Maxi,Oyedele,14,MC,Não Relacionado,Elenco,21,183,Dir.,5,0,0,3500000,20000,71,78,3,5,71,60,66,73,69,66
+Joaquín,Panichelli,9,ATA,Titular,Elenco,23,190,Dir.,5,0,0,24000000,47000,79,85,5,5,70,80,65,73,28,83
+Mike,Penders,1,GOL,Titular,Emprest. - IN,20,200,Esq.,1,0,0,19500000,28000,80,86,1,4,81,80,80,81,22,76
+Óscar,Perea,-,ME,Não Relacionado,Emprest. - OUT,20,174,Dir.,4,0,0,2200000,13000,69,75,4,3,81,58,60,74,27,62
+Idrissa,Sabaly,35,VOL,Não Relacionado,Emprest. - OUT,18,190,Esq.,5,0,0,850000,5000,62,76,2,3,64,41,57,55,61,69
+Saïdou,Sow,-,ZAG,Não Relacionado,Emprest. - OUT,22,187,Dir.,3,0,0,2200000,22000,71,75,2,3,61,41,55,61,71,69
+Abakar,Sylla,-,ZAG,Não Relacionado,Emprest. - OUT,23,188,Esq.,3,0,0,3300000,22000,71,78,2,3,70,30,56,69,69,71
+Gessime,Yassine,80,PD,Reserva,Elenco,19,173,Esq.,5,0,0,3800000,19000,72,83,5,2,66,63,69,79,40,46
+Mats ,Rots,26,LE,Reserva,Elenco,19,191,Esq.,5,0,0,4800000,19000,73,83,3,4,81,54,70,73,65,69
+Gilberto,Mora,-,MEI,Não Relacionado,Elenco,16,168,Dir.,5,0,0,8500000,14500,74,87,4,3,67,66,74,75,50,48
+Jonatas,Becker,-,PD,Não Relacionado,Elenco,17,170,Dir.,4,0,0,1500000,12500,68,85,3,2,77,57,59,69,35,56
+Sylvain,Mathieu,-,VOL,Não Relacionado,Elenco,17,182,Dir.,4,0,0,1300000,5700,65,93,4,2,56,51,53,58,65,71
+Jérome,Rolland,-,MC,Não Relacionado,Elenco,17,180,Dir.,4,0,0,1600000,6700,66,92,3,4,72,52,62,66,55,64
+Lorenzo,Schipper,-,VOL,Não Relacionado,Elenco,17,185,Dir.,4,0,0,1200000,5100,63,94,5,4,65,42,52,58,63,69
+Andrei,Cabral,-,ME,Não Relacionado,Elenco,17,175,Dir.,4,0,0,1800000,7000,64,94,5,4,84,52,58,66,37,55
+Ygor,Conceição,-,PD,Não Relacionado,Elenco,17,169,Dir.,4,0,0,1300000,7000,64,93,3,3,85,60,54,65,32,58

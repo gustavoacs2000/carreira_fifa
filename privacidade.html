@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110d">
+  <meta name="robots" content="index,follow">
+  <title>Aviso de Privacidade — Manager FC</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="privacy-page">
+  <main class="privacy-shell">
+    <header class="privacy-header">
+      <a class="privacy-brand" href="index.html"><span>MC</span> Manager FC</a>
+      <a class="privacy-back" href="index.html">Voltar ao sistema</a>
+    </header>
+
+    <article class="privacy-document">
+      <p class="eyebrow">Privacidade por padrão</p>
+      <h1>Aviso de Privacidade</h1>
+      <p class="privacy-lead">Este aviso explica, em linguagem direta, quais dados são necessários para o Manager FC funcionar e como você pode controlá-los.</p>
+      <p class="privacy-updated">Última atualização: 15 de julho de 2026.</p>
+
+      <section>
+        <h2>1. Controlador e contato</h2>
+        <p>O controlador dos dados tratados pelo Manager FC é <strong>{{DATA_CONTROLLER_NAME}}</strong>. Solicitações relacionadas à privacidade e aos direitos previstos na LGPD podem ser enviadas para <a href="mailto:{{PRIVACY_CONTACT_EMAIL}}">{{PRIVACY_CONTACT_EMAIL}}</a>.</p>
+      </section>
+
+      <section>
+        <h2>2. Quem pode utilizar</h2>
+        <p>O serviço é destinado a pessoas com 18 anos ou mais. Não buscamos conscientemente tratar dados de crianças ou adolescentes.</p>
+      </section>
+
+      <section>
+        <h2>3. Dados tratados</h2>
+        <ul>
+          <li><strong>Autenticação:</strong> identificador técnico da conta, e-mail, provedor Google e dados técnicos de sessão administrados pelo Supabase Auth.</li>
+          <li><strong>Metadados do provedor:</strong> o fluxo padrão do Google pode fornecer nome e foto ao Supabase Auth. O Manager FC não copia esses campos para a tabela da aplicação, não os exibe e não os utiliza para perfil ou marketing.</li>
+          <li><strong>Conteúdo da carreira:</strong> clubes, jogadores, temporadas, calendário, estatísticas, escalações, imagens opcionais e demais informações que você decidir cadastrar.</li>
+          <li><strong>Operação:</strong> UUID do usuário e data da última sincronização. Não criamos tabela de perfil.</li>
+        </ul>
+        <p>Não solicitamos acesso ao Google Drive, contatos, agenda, localização ou outros serviços da sua conta Google. Também não armazenamos tokens do Google para acessar APIs em seu nome.</p>
+      </section>
+
+      <section>
+        <h2>4. Finalidades e bases</h2>
+        <p>Os dados são usados somente para autenticar sua entrada, impedir acesso indevido, sincronizar sua carreira e atender ações solicitadas por você. O tratamento necessário para entregar essas funções se fundamenta na execução do serviço solicitado; controles estritamente necessários de segurança e prevenção a abuso podem se apoiar em legítimo interesse, observados os direitos do titular.</p>
+      </section>
+
+      <section>
+        <h2>5. Armazenamento local</h2>
+        <p>O navegador mantém a sessão de autenticação e um cache temporário da carreira para evitar perda de alterações. O cache da carreira é removido deste dispositivo quando você usa o botão <strong>Sair</strong> ou exclui a conta. Não utilizamos cookies ou identificadores para publicidade, analytics ou rastreamento entre sites.</p>
+      </section>
+
+      <section>
+        <h2>6. Operadores e transferência internacional</h2>
+        <p>Utilizamos Google para autenticação, Supabase para autenticação e banco de dados, e Vercel para hospedagem. Esses fornecedores podem processar dados fora do Brasil conforme suas infraestruturas, contratos e avisos de privacidade. Não vendemos dados nem os compartilhamos para publicidade.</p>
+      </section>
+
+      <section>
+        <h2>7. Retenção e eliminação</h2>
+        <p>A carreira permanece na base ativa enquanto sua conta existir. O botão <strong>Excluir conta e dados</strong> remove o usuário e, por exclusão em cascata, o estado da carreira da base ativa. Registros técnicos, logs de segurança ou cópias mantidas pelos operadores podem permanecer durante os prazos próprios desses fornecedores ou quando houver obrigação legal de conservação.</p>
+      </section>
+
+      <section>
+        <h2>8. Seus direitos</h2>
+        <p>Você pode acessar e portar a carreira usando o backup JSON, corrigir os dados dentro do sistema, sair e apagar o cache local, ou excluir a conta e a carreira pelo menu de privacidade. Para confirmação do tratamento, informações adicionais, oposição ou qualquer solicitação não atendida pela interface, use o contato indicado acima.</p>
+      </section>
+
+      <section>
+        <h2>9. Segurança e decisões automatizadas</h2>
+        <p>O acesso ao banco é protegido por autenticação e políticas que restringem cada registro ao respectivo UUID. Não realizamos publicidade comportamental, criação de perfil pessoal nem decisões que produzam efeitos sobre você.</p>
+      </section>
+
+      <aside class="privacy-note">
+        <strong>Importante:</strong> este aviso descreve a implementação técnica do projeto. O controlador deve validar as bases legais, contratos com operadores, canal de atendimento e demais obrigações aplicáveis antes da publicação.
+      </aside>
+    </article>
+  </main>
+</body>
+</html>
