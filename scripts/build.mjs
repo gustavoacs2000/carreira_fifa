@@ -57,7 +57,7 @@ await mkdir(resolve(dist, 'assets', 'vendor'), { recursive: true });
 for (const file of ['index.html']) {
   await cp(resolve(root, file), resolve(dist, file));
 }
-for (const file of ['legacy.css', 'styles.css', 'seed-data.js', 'app.js']) {
+for (const file of ['favicon.svg', 'legacy.css', 'styles.css', 'seed-data.js', 'app.js']) {
   await cp(resolve(root, 'assets', file), resolve(dist, 'assets', file));
 }
 await cp(resolve(root, 'data'), resolve(dist, 'data'), { recursive: true });

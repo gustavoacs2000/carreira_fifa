@@ -1,3 +1,4 @@
+(() => {
 const { createClient } = window.supabase;
 
 const SUPABASE_URL = __SUPABASE_URL__;
@@ -6,7 +7,7 @@ const APP_PUBLIC_URL = __APP_PUBLIC_URL__;
 const AUTH_STORAGE_KEY = 'managerFC:auth:v1';
 const configured = /^https:\/\/.+\.supabase\.co$/i.test(SUPABASE_URL) && SUPABASE_PUBLISHABLE_KEY.length > 20;
 
-const supabase = configured
+const supabaseClient = configured
   ? createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
         flowType: 'pkce',
@@ -78,7 +79,7 @@ async function loadCareer(user) {
   setAuthStatus('Carregando sua carreira…');
   setSyncStatus('Carregando da nuvem', 'saving');
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('career_states')
     .select('state, version')
     .eq('user_id', user.id)
@@ -121,7 +122,7 @@ async function applySession(session) {
 }
 
 async function signIn() {
-  if (!configured || !supabase) {
+  if (!configured || !supabaseClient) {
     setAuthStatus('O acesso Google ainda precisa ser configurado pelo administrador.');
     return;
   }
@@ -135,7 +136,7 @@ async function signIn() {
   setAuthStatus('Abrindo o acesso seguro do Google…');
 
   const redirectTo = APP_PUBLIC_URL || `${window.location.origin}${window.location.pathname}`;
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo,
@@ -165,11 +166,11 @@ async function flushSave() {
   clearTimeout(saveTimer);
   saveTimer = null;
   if (saveInFlight) await saveInFlight;
-  if (!pendingState || !currentUser || !supabase) return;
+  if (!pendingState || !currentUser || !supabaseClient) return;
 
   const state = pendingState;
   pendingState = null;
-  saveInFlight = supabase.rpc('save_my_career', { p_state: state });
+  saveInFlight = supabaseClient.rpc('save_my_career', { p_state: state });
   const { error } = await saveInFlight;
   saveInFlight = null;
 
@@ -185,12 +186,12 @@ async function flushSave() {
 }
 
 async function signOut() {
-  if (!supabase || accountOperation) return;
+  if (!supabaseClient || accountOperation) return;
   accountOperation = true;
   setSyncStatus('Finalizando sessão', 'saving');
   await flushSave();
   app?.detachUser({ clearCache: true });
-  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  const { error } = await supabaseClient.auth.signOut({ scope: 'local' });
   accountOperation = false;
   currentUser = null;
   if (error) console.error(error);
@@ -198,14 +199,14 @@ async function signOut() {
 }
 
 async function deleteAccount() {
-  if (!supabase || !currentUser || accountOperation) return;
+  if (!supabaseClient || !currentUser || accountOperation) return;
   if (!confirm('Esta ação excluirá sua conta, carreiras e históricos da base ativa. Deseja continuar?')) return;
   const confirmation = prompt('Para confirmar, digite EXCLUIR:');
   if (confirmation !== 'EXCLUIR') return;
 
   accountOperation = true;
   setSyncStatus('Excluindo conta e dados', 'saving');
-  const { error } = await supabase.functions.invoke('delete-account', { body: { confirmation } });
+  const { error } = await supabaseClient.functions.invoke('delete-account', { body: { confirmation } });
 
   if (error) {
     accountOperation = false;
@@ -235,19 +236,19 @@ async function initialize(appApi) {
     if (event.target.checked) setAuthStatus('');
   });
 
-  if (!configured || !supabase) {
+  if (!configured || !supabaseClient) {
     showGate('Integração não configurada. Consulte CONFIGURACAO-SUPABASE.md.');
     return;
   }
 
-  supabase.auth.onAuthStateChange((event, session) => {
+  supabaseClient.auth.onAuthStateChange((event, session) => {
     setTimeout(() => {
       if (event === 'SIGNED_OUT') void applySession(null);
       else if (session) void applySession(session);
     }, 0);
   });
 
-  const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await supabaseClient.auth.getSession();
   if (error) {
     console.error(error);
     showGate('Não foi possível verificar sua sessão. Tente entrar novamente.');
@@ -265,3 +266,4 @@ window.ManagerAuth = {
   queueSave,
   flushSave
 };
+})();

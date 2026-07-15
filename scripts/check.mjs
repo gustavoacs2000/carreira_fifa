@@ -8,6 +8,7 @@ const requiredFiles = [
   'privacidade.html',
   'assets/legacy.css',
   'assets/styles.css',
+  'assets/favicon.svg',
   'assets/seed-data.js',
   'assets/app.js',
   'src/auth.js',
@@ -17,6 +18,7 @@ const requiredFiles = [
   'dist/privacidade.html',
   'dist/assets/auth.js',
   'dist/assets/vendor/supabase.js',
+  'dist/assets/favicon.svg',
   'dist/assets/app.js',
   'vercel.json'
 ];
@@ -29,6 +31,7 @@ const contents = Object.fromEntries(await Promise.all(requiredFiles.map(async fi
 new Function(contents['assets/seed-data.js']);
 new Function(contents['assets/app.js']);
 new Function(contents['dist/assets/auth.js']);
+new Function(`${contents['dist/assets/vendor/supabase.js']}\n${contents['dist/assets/auth.js']}`);
 JSON.parse(contents['vercel.json']);
 
 const html = contents['index.html'];
@@ -53,7 +56,7 @@ for (const id of requiredIds) {
   if (!html.includes(`id="${id}"`)) throw new Error(`Elemento obrigatório ausente: #${id}`);
 }
 
-for (const asset of ['assets/legacy.css', 'assets/styles.css', 'assets/seed-data.js', 'assets/vendor/supabase.js', 'assets/auth.js', 'assets/app.js']) {
+for (const asset of ['assets/favicon.svg', 'assets/legacy.css', 'assets/styles.css', 'assets/seed-data.js', 'assets/vendor/supabase.js', 'assets/auth.js', 'assets/app.js']) {
   if (!html.includes(asset)) throw new Error(`Referência ausente no HTML: ${asset}`);
 }
 
