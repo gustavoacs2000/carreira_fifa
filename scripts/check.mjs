@@ -3,14 +3,25 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const appModules = [
+  'app-core.js',
+  'app-roster.js',
+  'app-calendar.js',
+  'app-transfers-stats.js',
+  'app-tactics.js',
+  'app-render.js'
+];
 const requiredFiles = [
   'index.html',
   'privacidade.html',
-  'assets/legacy.css',
+  'assets/app.css',
+  'assets/cloud.css',
+  'assets/responsive.css',
   'assets/styles.css',
   'assets/favicon.svg',
   'assets/seed-data.js',
-  'assets/app.js',
+  'assets/bootstrap.js',
+  ...appModules.map(file => `assets/js/${file}`),
   'src/auth.js',
   'supabase/migrations/202607150001_initial.sql',
   'supabase/functions/delete-account/index.ts',
@@ -19,7 +30,9 @@ const requiredFiles = [
   'dist/assets/auth.js',
   'dist/assets/vendor/supabase.js',
   'dist/assets/favicon.svg',
-  'dist/assets/app.js',
+  'dist/assets/styles.css',
+  'dist/assets/bootstrap.js',
+  ...appModules.map(file => `dist/assets/js/${file}`),
   'vercel.json'
 ];
 
@@ -29,7 +42,8 @@ const contents = Object.fromEntries(await Promise.all(requiredFiles.map(async fi
 ])));
 
 new Function(contents['assets/seed-data.js']);
-new Function(contents['assets/app.js']);
+new Function(appModules.map(file => contents[`assets/js/${file}`]).join('\n'));
+new Function(contents['assets/bootstrap.js']);
 new Function(contents['dist/assets/auth.js']);
 new Function(`${contents['dist/assets/vendor/supabase.js']}\n${contents['dist/assets/auth.js']}`);
 JSON.parse(contents['vercel.json']);
@@ -42,12 +56,21 @@ const requiredIds = [
   'filtros-container',
   'dashboard',
   'elenco-container',
-  'modal-compra',
-  'modal-venda',
+  'modal-negociar',
+  'modal-contratar',
   'modal-promover',
   'modal-evento',
-  'auth-gate',
+  'modal-relatorio',
+  'modal-view-rel',
+  'modal-livro-caixa',
+  'modal-competicoes',
+  'timeline-bar',
+  'inbox-panel',
+  'app-shell',
+  'auth-screen',
+  'age-confirm',
   'google-login',
+  'mobile-account',
   'sync-status',
   'account-email'
 ];
@@ -56,12 +79,40 @@ for (const id of requiredIds) {
   if (!html.includes(`id="${id}"`)) throw new Error(`Elemento obrigatório ausente: #${id}`);
 }
 
-for (const asset of ['assets/favicon.svg', 'assets/legacy.css', 'assets/styles.css', 'assets/seed-data.js', 'assets/vendor/supabase.js', 'assets/auth.js', 'assets/app.js']) {
+for (const asset of [
+  'assets/favicon.svg',
+  'assets/app.css',
+  'assets/cloud.css',
+  'assets/responsive.css',
+  'assets/seed-data.js',
+  'assets/vendor/supabase.js',
+  'assets/auth.js',
+  ...appModules.map(file => `assets/js/${file}`),
+  'assets/bootstrap.js'
+]) {
   if (!html.includes(asset)) throw new Error(`Referência ausente no HTML: ${asset}`);
 }
 
-if (!html.trimStart().startsWith('<!DOCTYPE html>') || !html.trimEnd().endsWith('</html>')) {
+if (!/^<!doctype html>/i.test(html.trimStart()) || !html.trimEnd().endsWith('</html>')) {
   throw new Error('O documento HTML tem conteúdo inválido antes ou depois da página.');
+}
+
+const application = appModules.map(file => contents[`assets/js/${file}`]).join('\n');
+for (const feature of [
+  'renderTimeline',
+  'abrirRelatorioPartida',
+  'abrirLivroCaixa',
+  'confirmarNegocio',
+  'confirmarContrato',
+  'abrirModalCompeticoes',
+  'excluirSelecionados',
+  'verificarEventosNarrativos',
+  'comprimirTudo'
+]) {
+  if (!application.includes(feature)) throw new Error(`Função nova ausente: ${feature}`);
+}
+if (application.includes('ManagerCloud')) {
+  throw new Error('Os módulos novos ainda dependem da camada antiga de sincronização.');
 }
 
 const sql = contents['supabase/migrations/202607150001_initial.sql'];

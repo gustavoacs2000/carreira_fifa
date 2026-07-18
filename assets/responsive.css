@@ -1,0 +1,135 @@
+/* iPad and mobile-first overrides */
+* { -webkit-tap-highlight-color: transparent; }
+button, select, input { touch-action: manipulation; }
+
+@media (max-width: 1100px) {
+    .sidebar { width: 190px; }
+    .timeline-bar { left: 190px; }
+    .taticas-wrapper { gap: 12px; padding: 10px; }
+    .pitch-container { width: min(52vw, 550px); height: min(71vw, 750px); }
+    .taticas-list { width: min(32vw, 350px); }
+}
+
+@media (max-width: 900px) {
+    .app-shell { flex-direction: column; }
+    .sidebar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: 100%;
+        height: calc(72px + env(safe-area-inset-bottom));
+        padding: 0 8px env(safe-area-inset-bottom);
+        border-right: 0;
+        border-top: 1px solid #2d3748;
+        flex-direction: row;
+        align-items: stretch;
+        z-index: 900;
+        box-sizing: border-box;
+    }
+
+    .sidebar-logo, .auth-user-panel { display: none; }
+    .mobile-account { display: inline-flex; align-items: center; justify-content: center; }
+    .auth-user-panel.is-open {
+        position: fixed;
+        right: 10px;
+        bottom: calc(82px + env(safe-area-inset-bottom));
+        z-index: 1100;
+        display: block;
+        width: min(280px, calc(100vw - 20px));
+        padding: 14px;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        background: #0f172a;
+        box-shadow: 0 12px 34px rgba(0, 0, 0, .55);
+        box-sizing: border-box;
+    }
+    .sidebar-menu {
+        width: 100%;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 2px;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        scrollbar-width: none;
+    }
+    .sidebar-menu::-webkit-scrollbar { display: none; }
+    .sidebar-menu a {
+        min-width: 92px;
+        padding: 10px 8px;
+        border-left: 0;
+        border-top: 3px solid transparent;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        font-size: .78rem;
+        line-height: 1.2;
+    }
+    .sidebar-menu a.ativo { border-left-color: transparent; border-top-color: #fbbf24; }
+
+    .main-content {
+        width: 100%;
+        height: 100dvh;
+        padding: 118px 12px calc(180px + env(safe-area-inset-bottom));
+    }
+
+    .squad-selector {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .squad-selector select,
+    .squad-selector button,
+    .fixed-buttons button,
+    #inbox-btn { min-height: 42px; flex: 0 0 auto; }
+
+    .fixed-buttons {
+        top: 62px;
+        left: 10px;
+        right: 10px;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding-bottom: 4px;
+    }
+
+    .fixed-buttons-bottom { bottom: calc(165px + env(safe-area-inset-bottom)); right: 12px; }
+    .timeline-bar {
+        left: 0;
+        bottom: calc(72px + env(safe-area-inset-bottom));
+        height: 88px;
+        padding: 0 8px;
+    }
+    .tl-btn { padding: 12px 10px; }
+    .tl-day { min-width: 72px; }
+    .tl-days { justify-content: flex-start; overflow-x: auto; }
+
+    h1#main-title { margin-top: 4px; font-size: 1.35rem; }
+    .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .filtros-container { padding: 12px; }
+    .top-row { align-items: stretch; }
+    .search-area { min-width: 100%; }
+
+    .taticas-wrapper { flex-direction: column; align-items: stretch; padding: 0; }
+    .taticas-filter-sidebar { width: 100%; flex-direction: row; overflow-x: auto; box-sizing: border-box; }
+    .taticas-filter-sidebar .filtro-btn { min-width: 52px; }
+    .pitch-container { width: min(92vw, 550px); height: min(125vw, 750px); margin: 0 auto; }
+    .taticas-list { width: 100%; max-height: 480px; box-sizing: border-box; }
+
+    .modal-content { width: min(92vw, 420px) !important; max-height: 88dvh; overflow-y: auto; box-sizing: border-box; }
+    .inbox-panel { top: 110px; right: 10px; width: min(92vw, 360px); max-height: 60dvh; }
+    .calendar-grid { min-width: 760px; }
+    .table-container { max-height: 62dvh; }
+}
+
+@media (max-width: 560px) {
+    .main-content { padding-inline: 8px; }
+    .dashboard { grid-template-columns: 1fr 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    .metric-card { min-width: 0; }
+    .auth-card { padding: 24px 18px; }
+}

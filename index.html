@@ -1,124 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#07110d">
-  <meta name="description" content="Organize elenco, mercado, base, táticas e temporadas do seu modo carreira.">
-  <title>Manager FC — Seu modo carreira organizado</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/legacy.css">
-  <link rel="stylesheet" href="assets/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1120" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Gerenciador pessoal de Modo Carreira para EA FC." />
+  <title>Manager FC 26</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/app.css" />
+  <link rel="stylesheet" href="/assets/cloud.css" />
+  <link rel="stylesheet" href="/assets/responsive.css" />
 </head>
-<body class="auth-pending">
-    <section class="auth-gate" id="auth-gate" aria-labelledby="auth-title">
-        <div class="auth-card">
-            <div class="auth-brand" aria-hidden="true"><span>MC</span><small>26</small></div>
-            <p class="auth-eyebrow">Sua carreira, em qualquer dispositivo</p>
-            <h1 id="auth-title">Entre para continuar</h1>
-            <p class="auth-intro">Use sua conta Google para manter elenco, temporadas e histórico sincronizados com segurança.</p>
-            <label class="age-confirm"><input type="checkbox" id="age-confirm"> Declaro ter 18 anos ou mais.</label>
-            <button class="google-login" id="google-login" type="button" disabled>
-                <span class="google-mark" aria-hidden="true">G</span>
-                Continuar com Google
-            </button>
-            <p class="auth-status" id="auth-status" role="status" aria-live="polite"></p>
-            <ul class="privacy-summary">
-                <li>Sem anúncios, analytics ou cookies de marketing.</li>
-                <li>Sem acesso ao Drive, contatos ou outros serviços Google.</li>
-                <li>Nome e foto não são copiados para o banco da aplicação.</li>
-            </ul>
-            <p class="auth-legal">Ao entrar, você confirma que leu o <a href="privacidade.html">Aviso de Privacidade</a>.</p>
+<body>
+  <section id="auth-screen" class="auth-screen" aria-labelledby="auth-title" aria-live="polite">
+    <div class="auth-card">
+      <div class="auth-brand">MANAGER FC 26</div>
+      <h1 id="auth-title">Seu modo carreira, sincronizado</h1>
+      <p>Entre com Google para acessar seus elencos, temporadas e estatísticas em qualquer navegador.</p>
+      <label class="age-confirm"><input type="checkbox" id="age-confirm" /> Declaro ter 18 anos ou mais.</label>
+      <button id="google-login" class="google-login" type="button" disabled>Continuar com Google</button>
+      <div id="auth-message" class="auth-message"></div>
+      <small>Este aplicativo não cria cookies. A sessão do Supabase fica no armazenamento local do navegador.<br><a class="privacy-link" href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></small>
+    </div>
+  </section>
+
+  <div id="app-shell" class="app-shell" aria-hidden="true">
+<div class="sidebar">
+        <div class="sidebar-logo">MANAGER FC 26</div>
+        <div class="sidebar-menu">
+            <a href="#" id="link-jogadores" onclick="mudarAba('jogadores')">🏟️ Elenco</a>
+            <a href="#" id="link-mercado" onclick="mudarAba('mercado')" class="ativo">🛒 Mercado</a>
+            <a href="#" id="link-taticas" onclick="mudarAba('taticas')">📋 Táticas</a>
+            <a href="#" id="link-base" onclick="mudarAba('base')">🌱 Base</a>
+            <a href="#" id="link-calendario" onclick="mudarAba('calendario')">📅 Calendário</a>
+            <a href="#" id="link-estatisticas" onclick="mudarAba('estatisticas')">📊 Estatísticas</a>
+            <a href="#" id="link-historico" onclick="mudarAba('historico')">🏛️ Histórico</a>
         </div>
-    </section>
-    <aside class="sidebar">
-        <div class="sidebar-logo" aria-label="Manager FC">
-            <span class="brand-mark">MC</span>
-            <span class="brand-copy">
-                <strong>Manager FC</strong>
-                <small>Career workspace</small>
-            </span>
-            <span class="brand-edition">26</span>
-        </div>
-        <nav class="sidebar-menu" aria-label="Navegação principal">
-            <a href="#elenco" id="link-jogadores" onclick="mudarAba('jogadores'); return false" class="ativo"><span>01</span> Elenco</a>
-            <a href="#mercado" id="link-mercado" onclick="mudarAba('mercado'); return false"><span>02</span> Mercado</a>
-            <a href="#taticas" id="link-taticas" onclick="mudarAba('taticas'); return false"><span>03</span> Táticas</a>
-            <a href="#base" id="link-base" onclick="mudarAba('base'); return false"><span>04</span> Base</a>
-            <a href="#calendario" id="link-calendario" onclick="mudarAba('calendario'); return false"><span>05</span> Calendário</a>
-            <a href="#estatisticas" id="link-estatisticas" onclick="mudarAba('estatisticas'); return false"><span>06</span> Estatísticas</a>
-            <a href="#historico" id="link-historico" onclick="mudarAba('historico'); return false"><span>07</span> Histórico</a>
-        </nav>
-        <div class="sidebar-footer">
-            <p id="sync-status"><span class="storage-dot"></span> Conectando à nuvem</p>
-            <div class="account-summary">
-                <span id="account-email" title="Conta conectada">Conta Google</span>
+
+        <div id="auth-user-panel" class="auth-user-panel" aria-live="polite">
+            <span id="account-email" class="auth-user-email" title="Conta conectada">Conta Google</span>
+            <div id="sync-status" class="sync-status" data-status="saving">
+                <span class="sync-dot"></span>
+                <span id="sync-status-text">Conectando à nuvem</span>
+            </div>
+            <div class="auth-actions">
+                <button type="button" onclick="ManagerAuth.flushSave()">Salvar agora</button>
                 <button type="button" onclick="ManagerAuth.signOut()">Sair</button>
+                <button class="danger-action" type="button" onclick="ManagerAuth.deleteAccount()">Excluir conta e dados</button>
             </div>
-            <div class="backup-actions">
-                <button id="btn-exportar-json" onclick="exportarJSON()" title="Baixar backup completo">Backup</button>
-                <label id="btn-importar-json" title="Restaurar backup completo">Restaurar<input type="file" accept=".json,application/json" onchange="importarJSON(event)"></label>
-            </div>
-            <div class="privacy-actions">
-                <a href="privacidade.html">Privacidade</a>
-                <button type="button" onclick="ManagerAuth.deleteAccount()">Excluir conta e dados</button>
-            </div>
+            <a class="privacy-link" href="/privacidade.html">Privacidade</a>
         </div>
-    </aside>
-    <main class="main-content">
-        <header class="workspace-header">
-            <div class="workspace-heading">
-                <p class="eyebrow">Central do clube</p>
-                <h1 id="main-title" aria-live="polite">RD Strasbourg</h1>
-                <p class="workspace-subtitle">Planeje o presente. Construa a próxima temporada.</p>
-            </div>
-            <div class="workspace-tools">
-                <div class="squad-selector" aria-label="Elenco e temporada ativos">
-                    <select id="squad-select" onchange="trocarElenco()" aria-label="Selecionar elenco"></select>
-                    <select id="season-select" onchange="trocarTemporada()" aria-label="Selecionar temporada"></select>
-                    <button class="btn-add" onclick="adicionarElenco()" title="Adicionar novo elenco" aria-label="Adicionar novo elenco">+</button>
-                    <button class="btn-del" onclick="excluirTemporadaAtual()" title="Excluir temporada atual" aria-label="Excluir temporada atual">−T</button>
-                    <button class="btn-del" onclick="excluirElencoAtual()" title="Excluir elenco atual" aria-label="Excluir elenco atual">−E</button>
-                </div>
-                <div class="fixed-buttons" style="display:flex" aria-label="Ações da seção">
-                    <button id="btn-editar" onclick="toggleEdit()" title="Editar dados"><span>✦</span> Editar</button>
-                    <button id="btn-adicionar" onclick="adicionarJogador()" style="display:none" title="Adicionar jogador"><span>＋</span> Jogador</button>
-                    <button id="btn-exportar-csv" onclick="exportarCSV()" title="Exportar esta lista em CSV"><span>↓</span> CSV</button>
-                    <button id="btn-importar-csv" onclick="$('#csvFileInput').click()" title="Importar jogadores de um CSV"><span>↑</span> Importar</button>
-                    <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none" onchange="importarCSV(event)">
-                    <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="processarImg(event)">
-                </div>
-                <button class="mobile-account" type="button" onclick="ManagerAuth.toggleAccount()"><span></span> Minha conta</button>
-            </div>
-        </header>
+    </div>
+    <div class="main-content">
+        <div class="squad-selector">
+            <select id="squad-select" onchange="trocarElenco()"></select>
+            <select id="season-select" onchange="trocarTemporada()"></select>
+            <button class="btn-del" onclick="excluirTemporadaAtual()" title="Excluir Temporada Atual" style="background:#9f1239">🗑️ Temp.</button>
+            <button class="btn-add" onclick="adicionarElenco()" title="Adicionar Novo Elenco">+</button>
+            <button class="btn-del" onclick="excluirElencoAtual()" title="Excluir Elenco Atual">🗑️</button>
+            <button id="btn-avancar-temporada" onclick="avancarTemporada()" title="Avançar Temporada" style="display:none; margin-left:10px; padding: 6px;">⏩</button>
+        </div>
+        <div class="fixed-buttons" style="display:flex; align-items:center;">
+            <div id="inbox-btn" onclick="toggleInbox()" title="Notificações">🔔<div id="inbox-badge" style="display:none">0</div></div>
+            <button id="mobile-account" class="mobile-account" type="button" onclick="ManagerAuth.toggleAccount()" title="Minha conta">👤</button>
+            <button id="btn-editar" onclick="toggleEdit()" title="Editar">✏️</button>
+            <button id="btn-adicionar" onclick="adicionarJogador()" style="display:none" title="Adicionar">➕</button>
+            <button id="btn-exportar-csv" onclick="exportarCSV()" title="Exportar CSV">📥</button>
+            <button id="btn-importar-csv" onclick="acionarImportarCSV()" title="Importar CSV">📤</button>
+            <button id="btn-exportar-backup" onclick="exportarBackup()" title="Baixar Save (Backup JSON)" style="background:#0284c7; margin-left:10px;">💾</button>
+            <button id="btn-importar-backup" onclick="$('#backupFileInput').click()" title="Carregar Save (Backup JSON)" style="background:#ea580c">📂</button>
+            <div id="storage-info" title="Tamanho aproximado do save enviado ao Supabase" style="display:none; font-size: 0.75em; color: #94a3b8; margin-left: 10px; background: #0f172a; padding: 4px 8px; border-radius: 4px; border: 1px solid #334155; font-weight: bold;">0 KB</div>
+            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importarCSV(event)">
+            <input type="file" id="csvCalendarFileInput" accept=".csv" style="display:none" onchange="importarCalendarioCSV(event)">
+            <input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="importarBackup(event)">
+            <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="processarImg(event)">
+        </div>
         <div class="fixed-buttons-bottom" style="display:flex">
-            <button id="btn-avancar-temporada" onclick="avancarTemporada()" title="Criar Snapshot, evoluir idades e atualizar contratos" style="display:none">⏩ Avançar Temporada</button>
-            <button id="btn-excluir-tudo" onclick="excluirAbaTodo()" style="display:none" title="Excluir Todos">🗑️</button>
+            <button id="btn-excluir-sel" onclick="excluirSel()" style="display:none" title="Excluir Selecionados">🗑️ Sel.</button>
+            <button id="btn-excluir-selecionados" onclick="excluirSelecionados()" style="display:none; background:#b91c1c; color:#fff; padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:700; font-size:.8em; margin-right: 10px;" title="Excluir Selecionados">🗑️ Selecionados (<span id="count-sel">0</span>)</button>
+            <button id="btn-excluir-visiveis" onclick="excluirVisiveis()" style="display:none; background:#ea580c; color:#fff; padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:700; font-size:.8em; margin-right: 10px;" title="Excluir Visíveis">🗑️ Visíveis</button>
+            <button id="btn-excluir-tudo" onclick="excluirAbaTodo()" style="display:none" title="Excluir Todos">🗑️ Todos</button>
         </div>
+        <h1 id="main-title">RD Strasbourg</h1>
         <div class="filtros-container" id="filtros-container" style="display:block">
             <div class="top-row">
-                <div class="search-area"><input type="text" id="search-input" placeholder="🔍 Pesquisar jogador..." oninput="consolidarEdicoes(); renderizar()"></div>
+                <div class="search-area"><input type="text" id="search-input" placeholder="🔍 Pesquisar jogador..." oninput="debounceBusca()"></div>
                 <div class="sort-area">
-                    <select id="sort-select" onchange="consolidarEdicoes(); renderizar()">
-                        <option value="none">Ordenar por...</option><option value="pos">Posição</option><option value="sobrenome">Sobrenome</option>
-                        <option value="idade">Idade</option><option value="valor">Valor</option><option value="salario">Salário</option><option value="ovr">OVR</option><option value="pot">POT</option>
+                    <select id="sort-select" onchange="consolidarEdicoes(); renderizar(true)">
+                        <option value="none">Ordernar por...</option><option value="pos">Posição</option><option value="sobrenome">Sobrenome</option>
+                        <option value="idade">Idade</option><option value="valor">Valor</option><option value="salario">Salário</option><option value="ovr">OVR</option><option value="pot">POT</option><option value="contAnos">Contrato</option><option value="multa">Multa</option>
                     </select>
                     <button class="filtro-btn" onclick="toggleSortDirection()" title="Inverter Ordem">⬆️/⬇️</button>
                     <button class="filtro-btn" id="btn-toggle-view" onclick="alternarVisualizacao()" title="Alternar Visualização">🪟</button>
-                    <button class="filtro-btn" id="btn-filtro-renovacao" onclick="toggleFiltroRenovacao()" title="Filtrar Renovações Pendentes">⚠️ Renovações</button>
+                    <button class="filtro-btn" id="btn-filtro-renovacao" onclick="toggleFiltroRenovacao()" title="Filtrar Renovações Pendentes">⚠️</button>
+
                 </div>
             </div>
-            <div class="filtros-area" id="filtros-area" style="display:block">
-                <div class="filtro-linha" id="filtro-pos"></div><div class="filtro-linha" id="filtro-sit"></div><div class="filtro-linha" id="filtro-status"></div>
+            <div class="filtros-area" id="filtros-area">
+                <div style="display:flex;flex-wrap:nowrap;gap:8px;width:100%;overflow-x:auto;padding-bottom:4px;">
+                    <div class="filtro-linha" id="filtro-pos" style="flex:auto;white-space:nowrap;"></div>
+                    <div class="filtro-linha" id="filtro-sit" style="flex:auto;white-space:nowrap;"></div>
+                    <div class="filtro-linha" id="filtro-status" style="flex:auto;white-space:nowrap;"></div>
+                </div>
+                <div style="display:flex;gap:8px;width:100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;" id="filtro-faixas"></div>
             </div>
         </div>
         <div class="dashboard" id="dashboard" style="display:grid"></div>
         <div id="elenco-container"></div>
-    </main>
-    
-    <div id="modal-compra" class="modal-overlay"><div class="modal-content"><div class="modal-header">Contratar Jogador</div><div id="modal-compra-nome" style="text-align:center;font-size:1.1em;font-weight:700;margin-bottom:5px"></div><input type="hidden" id="modal-compra-idx"><div class="modal-row"><label>Valor da Compra (€):</label><input type="number" id="modal-compra-valor" min="0"></div><div class="modal-row"><label>Novo Salário (€):</label><input type="number" id="modal-compra-salario" min="0"></div><div class="modal-row" style="flex-direction:row;align-items:center;justify-content:space-between"><div style="flex:1;margin-right:10px"><label>Contrato (Anos):</label><input type="number" id="modal-compra-anos" min="0" max="10" style="width:100%"></div><div style="flex:1"><label>Contrato (Meses):</label><input type="number" id="modal-compra-meses" min="0" max="11" style="width:100%"></div></div><div class="modal-actions"><button class="btn-cancelar" onclick="fecharModalCompra()">Cancelar</button><button class="btn-confirmar" onclick="confirmarCompra()">Comprar</button></div></div></div>
-    <div id="modal-venda" class="modal-overlay"><div class="modal-content"><div class="modal-header">Vender Jogador</div><div id="modal-venda-nome" style="text-align:center;font-size:1.1em;font-weight:700;margin-bottom:5px"></div><input type="hidden" id="modal-venda-idx"><div class="modal-row"><label>Valor Transferência (€):</label><input type="number" id="modal-venda-valor" min="0" placeholder="Valor recebido"></div><div class="modal-actions"><button class="btn-cancelar" onclick="fecharModalVenda()">Cancelar</button><button class="btn-confirmar" onclick="confirmarVenda()">Confirmar Venda</button></div></div></div>
+    </div>
+
+    <div id="modal-negociar" class="modal-overlay"><div class="modal-content" style="width:360px"><div class="modal-header">Negociar Jogador</div><div id="modal-negociar-nome" style="text-align:center;font-size:1.1em;font-weight:700;margin-bottom:10px"></div><input type="hidden" id="modal-negociar-idx"><input type="hidden" id="modal-negociar-tipo" value="venda"><div style="display:flex;gap:5px;margin-bottom:15px"><button id="btn-tipo-venda" class="filtro-btn ativo" style="flex:1" onclick="mudarTipoNegocio('venda')">Vender em Definitivo</button><button id="btn-tipo-emprestimo" class="filtro-btn" style="flex:1" onclick="mudarTipoNegocio('emprestimo')">Emprestar (OUT)</button></div><div id="form-venda" style="display:flex;flex-direction:column;gap:10px"><div class="modal-row"><label>Valor de Venda (€):</label><input type="number" id="modal-negociar-valor-venda" min="0"></div><div class="modal-row"><label>Clube Comprador:</label><input type="text" id="modal-negociar-clube-venda" placeholder="Ex: Real Madrid"></div></div><div id="form-emprestimo" style="display:none;flex-direction:column;gap:10px"><div class="modal-row"><label>Clube de Destino:</label><input type="text" id="modal-negociar-clube-emp" placeholder="Ex: Sevilla"></div><div class="modal-row" style="flex-direction:row;align-items:center;justify-content:space-between"><div style="flex:1;margin-right:10px"><label>Tempo (Anos):</label><input type="number" id="modal-negociar-emp-anos" value="1" min="0" max="5"></div><div style="flex:1"><label>Tempo (Meses):</label><input type="number" id="modal-negociar-emp-meses" value="0" min="0" max="11"></div></div><div class="modal-row" style="flex-direction:row;align-items:center;gap:10px"><label>Opção de Compra:</label><input type="checkbox" id="modal-negociar-tem-opcao" onchange="$('#div-opcao-valor').style.display=this.checked?'flex':'none'" style="transform:scale(1.2)"></div><div class="modal-row" id="div-opcao-valor" style="display:none"><label>Valor da Opção (€):</label><input type="number" id="modal-negociar-opcao-valor" min="0"></div></div><div class="modal-actions" style="margin-top:10px"><button class="btn-cancelar" onclick="fecharModalNegociar()">Cancelar</button><button class="btn-confirmar" onclick="confirmarNegocio()">Confirmar</button></div></div></div>
+
+    <div id="modal-contratar" class="modal-overlay"><div class="modal-content" style="width:360px"><div class="modal-header">Contratar Jogador</div><div id="modal-contratar-nome" style="text-align:center;font-size:1.1em;font-weight:700;margin-bottom:10px"></div><input type="hidden" id="modal-contratar-idx"><input type="hidden" id="modal-contratar-tipo" value="compra"><div style="display:flex;gap:5px;margin-bottom:15px"><button id="btn-tipo-compra" class="filtro-btn ativo" style="flex:1" onclick="mudarTipoContrato('compra')">Comprar Definitivo</button><button id="btn-tipo-emp-in" class="filtro-btn" style="flex:1" onclick="mudarTipoContrato('emprestimo')">Pegar Emprestado (IN)</button></div><div id="form-compra" style="display:flex;flex-direction:column;gap:10px"><div class="modal-row"><label>Clube Vendedor:</label><input type="text" id="modal-contratar-clube-compra" placeholder="Ex: Benfica"></div><div class="modal-row"><label>Valor da Compra (€):</label><input type="number" id="modal-contratar-valor-compra" min="0"></div><div class="modal-row"><label>Novo Salário (€):</label><input type="number" id="modal-contratar-salario-compra" min="0"></div><div class="modal-row" style="flex-direction:row"><div style="flex:1;margin-right:10px"><label>Contrato (Anos):</label><input type="number" id="modal-contratar-anos" min="0" max="10"></div><div style="flex:1"><label>Contrato (Meses):</label><input type="number" id="modal-contratar-meses" min="0" max="11"></div></div></div><div id="form-emp-in" style="display:none;flex-direction:column;gap:10px"><div class="modal-row"><label>Clube de Origem:</label><input type="text" id="modal-contratar-clube-origem" placeholder="Ex: Chelsea"></div><div class="modal-row" style="flex-direction:row"><div style="flex:1;margin-right:10px"><label>Tempo (Anos):</label><input type="number" id="modal-contratar-emp-in-anos" value="1" min="0" max="5"></div><div style="flex:1"><label>Tempo (Meses):</label><input type="number" id="modal-contratar-emp-in-meses" value="0" min="0" max="11"></div></div><div class="modal-row"><label>Salário que Pagaremos (€):</label><input type="number" id="modal-contratar-salario-emp-in" min="0"></div><div class="modal-row" style="flex-direction:row;align-items:center;gap:10px"><label>Opção de Compra:</label><input type="checkbox" id="modal-contratar-tem-opcao" onchange="$('#div-opcao-in-valor').style.display=this.checked?'flex':'none'" style="transform:scale(1.2)"></div><div class="modal-row" id="div-opcao-in-valor" style="display:none"><label>Valor da Opção (€):</label><input type="number" id="modal-contratar-opcao-in-valor" min="0"></div></div><div class="modal-actions" style="margin-top:10px"><button class="btn-cancelar" onclick="fecharModalContratar()">Cancelar</button><button class="btn-confirmar" onclick="confirmarContrato()">Confirmar</button></div></div></div>
+
     <div id="modal-promover" class="modal-overlay"><div class="modal-content"><div class="modal-header">Promover ao Profissional</div><div id="modal-promover-nome" style="text-align:center;font-size:1.1em;font-weight:700;margin-bottom:5px"></div><input type="hidden" id="modal-promover-idx"><div class="modal-row" style="flex-direction:row;align-items:center;justify-content:space-between"><div style="flex:1;margin-right:10px"><label>Contrato (Anos):</label><input type="number" id="modal-promover-anos" value="3" min="0" max="10" style="width:100%"></div><div style="flex:1"><label>Contrato (Meses):</label><input type="number" id="modal-promover-meses" value="0" min="0" max="11" style="width:100%"></div></div><div class="modal-row"><label>Novo Salário (€):</label><input type="number" id="modal-promover-salario" min="0"></div><div class="modal-row"><label>Novo Valor (€):</label><input type="number" id="modal-promover-valor" min="0"></div><div class="modal-row"><label>Nova Multa (€):</label><input type="number" id="modal-promover-multa" min="0"></div><div class="modal-row"><label>Status:</label><select id="modal-promover-status" style="width:100%"><option value="Titular">Titular</option><option value="Reserva">Reserva</option><option value="Não Relacionado" selected>Não Relacionado</option></select></div><div class="modal-actions"><button class="btn-cancelar" onclick="fecharModalPromover()">Cancelar</button><button class="btn-confirmar" onclick="confirmarPromocao()">Promover</button></div></div></div>
+
     <div id="modal-evento" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">Gerenciar Jogo</div>
@@ -129,7 +127,7 @@
                 <div style="flex:1;display:flex;flex-direction:column;gap:5px"><label>Mando:</label><select id="modal-evento-mando" style="width:100%;box-sizing:border-box;background:#0f172a;color:#fff;border:1px solid #334155;padding:10px;border-radius:6px;"><option value="C">Casa (C)</option><option value="F">Fora (F)</option></select></div>
             </div>
             <div class="modal-row" style="flex-direction:row;gap:10px">
-                <div style="flex:1;display:flex;flex-direction:column;gap:5px"><label>Rodada:</label><input type="number" id="modal-evento-rodada" style="width:100%;box-sizing:border-box"></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:5px"><label>Fase/Rodada:</label><input type="text" id="modal-evento-rodada" style="width:100%;box-sizing:border-box" placeholder="Ex: Oitavas"></div>
                 <div style="flex:2;display:flex;flex-direction:column;gap:5px"><label>Campeonato:</label><select id="modal-evento-camp" style="width:100%;box-sizing:border-box;background:#0f172a;color:#fff;border:1px solid #334155;padding:10px;border-radius:6px;font-size:.9em"><option>Ligue 1</option><option>Coupe de France</option><option>UEFA Champions League</option><option>UEFA Europa League</option><option>UEFA Conference League</option><option>Pré-Temporada</option></select></div>
             </div>
             <div class="modal-row" style="flex-direction:row;gap:10px">
@@ -139,10 +137,37 @@
             <div class="modal-actions" style="margin-top:15px"><button class="btn-cancelar" onclick="fecharModalEvento()">Cancelar</button><button class="btn-confirmar" id="btn-salvar-evento" onclick="salvarEvento()">Salvar</button></div>
             <button class="btn-cancelar" id="btn-excluir-evento" style="margin-top:10px;width:100%;display:none" onclick="excluirEvento()">🗑️ Excluir Evento</button>
         </div>
+    </div>
+
+    <div id="modal-relatorio" class="modal-overlay"><div class="modal-content" style="width:420px;max-height:90vh;display:flex;flex-direction:column;gap:10px;padding:20px"><div class="modal-header">Relatório de Partida</div><div id="rel-body" style="display:flex;flex-direction:column;gap:10px;"></div><div class="modal-actions" style="margin-top:10px"><button class="btn-cancelar" onclick="$('#modal-relatorio').style.display='none'">Cancelar</button><button class="btn-confirmar" onclick="salvarRelatorio()">Salvar Relatório</button></div></div></div>
+
+    <div id="modal-view-rel" class="modal-overlay"><div class="modal-content" style="width:480px;padding:20px"><div class="modal-header" id="view-rel-header" style="text-align:center;border-bottom:none;padding-bottom:0"></div><div style="display:flex;justify-content:center;transform:scale(0.65);transform-origin:top center;height:490px;margin-top:15px"><div class="pitch-container" id="view-rel-pitch" style="box-shadow:0 10px 25px rgba(0,0,0,0.8)"></div></div><div id="view-rel-subs" style="background:#0f172a;padding:12px;border-radius:8px;font-size:.95em;color:#cbd5e1;text-align:center;border:1px solid #1e293b;margin-top:-20px"></div><div class="modal-actions" style="margin-top:15px;display:flex;gap:10px"><button class="btn-cancelar" style="background:#b91c1c" id="btn-del-rel">🗑️ Excluir Relatório</button><button class="btn-confirmar" style="background:#334155" onclick="$('#modal-view-rel').style.display='none'">Fechar</button></div></div></div>
+
+    <div id="modal-livro-caixa" class="modal-overlay"><div class="modal-content" style="width:600px; max-height:80vh"><div class="modal-header">Livro-Caixa <span style="font-size:0.5em;color:#94a3b8;display:block;margin-top:5px;font-weight:normal">(Transações da Temporada Atual)</span></div><div id="livro-caixa-dash" style="display:flex; gap:10px; margin-bottom:15px"></div><div style="flex:1; overflow-y:auto; background:#0f172a; border-radius:8px; border:1px solid #334155; padding:10px; max-height: 50vh" id="livro-caixa-list"></div><div class="modal-actions" style="margin-top:15px"><button class="btn-confirmar" style="width:100%" onclick="$('#modal-livro-caixa').style.display='none'">Fechar Livro-Caixa</button></div></div></div>
+
+    <div id="timeline-bar" class="timeline-bar"></div>
+    <div id="inbox-panel" class="inbox-panel">
+        <div class="inbox-header"><span>Caixa de Entrada</span><button onclick="toggleInbox()" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold">✖</button></div>
+        <div style="display:flex;gap:5px;padding:10px 10px 0 10px;">
+            <button onclick="marcarTodasLidas()" style="flex:1;background:#3b82f6;color:#fff;border:none;border-radius:4px;padding:5px;cursor:pointer;font-size:.8em;font-weight:bold;">Marcar Lidas</button>
+            <button onclick="limparNotificacoes()" style="flex:1;background:#ef4444;color:#fff;border:none;border-radius:4px;padding:5px;cursor:pointer;font-size:.8em;font-weight:bold;">Limpar</button>
+        </div>
+        <div id="inbox-list" class="inbox-list"></div>
+    </div>
+<div id="modal-competicoes" class="modal-overlay"><div class="modal-content" style="width:360px"><div class="modal-header">Gerenciar Competições</div><div id="modal-competicoes-list" style="max-height:200px;overflow-y:auto;margin-bottom:10px;"></div><div class="modal-row"><label>Nova Competição (Nome):</label><input type="text" id="nova-comp-nome" placeholder="Ex: Premier League"></div><div class="modal-row"><label>Cor (Hex/Nome):</label><input type="color" id="nova-comp-cor" value="#3b82f6" style="width:100%;height:40px;padding:0;cursor:pointer;"></div><div class="modal-actions" style="margin-top:15px"><button class="btn-cancelar" onclick="document.querySelector('#modal-competicoes').style.display='none'">Fechar</button><button class="btn-confirmar" onclick="if(document.querySelector('#nova-comp-nome').value.trim()!==''){salvarCompeticao(document.querySelector('#nova-comp-nome').value.trim(), document.querySelector('#nova-comp-cor').value);document.querySelector('#nova-comp-nome').value='';}">Adicionar</button></div></div></div>
+
+<div id="toast-container" style="position:fixed;bottom:80px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;"></div>
   </div>
-  <script src="assets/seed-data.js"></script>
-  <script src="assets/vendor/supabase.js"></script>
-  <script src="assets/auth.js"></script>
-  <script src="assets/app.js"></script>
+
+  <script src="/assets/seed-data.js"></script>
+  <script src="/assets/vendor/supabase.js"></script>
+  <script src="/assets/auth.js"></script>
+  <script src="/assets/js/app-core.js"></script>
+  <script src="/assets/js/app-roster.js"></script>
+  <script src="/assets/js/app-calendar.js"></script>
+  <script src="/assets/js/app-transfers-stats.js"></script>
+  <script src="/assets/js/app-tactics.js"></script>
+  <script src="/assets/js/app-render.js"></script>
+  <script src="/assets/bootstrap.js"></script>
 </body>
 </html>

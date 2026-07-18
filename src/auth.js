@@ -29,17 +29,16 @@ let loadingUserId = null;
 const byId = id => document.getElementById(id);
 
 function setAuthStatus(message = '') {
-  const status = byId('auth-status');
+  const status = byId('auth-message');
   if (status) status.textContent = message;
 }
 
 function setSyncStatus(message, state = 'idle') {
   const status = byId('sync-status');
   if (!status) return;
-  const dot = document.createElement('span');
-  dot.className = 'storage-dot';
-  status.replaceChildren(dot, document.createTextNode(` ${message}`));
-  status.dataset.state = state;
+  const text = byId('sync-status-text');
+  if (text) text.textContent = message;
+  status.dataset.status = state === 'synced' ? 'saved' : state;
 }
 
 function cleanOAuthParams() {
@@ -52,10 +51,13 @@ function cleanOAuthParams() {
 
 function showGate(message = '') {
   currentUser = null;
-  document.body.classList.add('auth-pending');
-  document.body.classList.remove('auth-ready', 'account-open');
-  const gate = byId('auth-gate');
-  if (gate) gate.hidden = false;
+  const gate = byId('auth-screen');
+  if (gate) gate.classList.remove('is-hidden');
+  const shell = byId('app-shell');
+  if (shell) {
+    shell.classList.remove('is-ready');
+    shell.setAttribute('aria-hidden', 'true');
+  }
   const button = byId('google-login');
   if (button) button.disabled = !configured || !byId('age-confirm')?.checked;
   setAuthStatus(message);
@@ -63,10 +65,13 @@ function showGate(message = '') {
 
 function showApp(user) {
   currentUser = user;
-  document.body.classList.remove('auth-pending');
-  document.body.classList.add('auth-ready');
-  const gate = byId('auth-gate');
-  if (gate) gate.hidden = true;
+  const gate = byId('auth-screen');
+  if (gate) gate.classList.add('is-hidden');
+  const shell = byId('app-shell');
+  if (shell) {
+    shell.classList.add('is-ready');
+    shell.setAttribute('aria-hidden', 'false');
+  }
   const accountEmail = byId('account-email');
   if (accountEmail) accountEmail.textContent = user.email || 'Conta Google';
   cleanOAuthParams();
@@ -223,7 +228,7 @@ async function deleteAccount() {
 }
 
 function toggleAccount() {
-  document.body.classList.toggle('account-open');
+  byId('auth-user-panel')?.classList.toggle('is-open');
 }
 
 async function initialize(appApi) {

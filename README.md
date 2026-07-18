@@ -13,6 +13,15 @@ Organizador de modo carreira com login Google, sincronização entre dispositivo
 
 Não existe tabela de perfil. Nome, foto, telefone e outros dados pessoais não são copiados para o banco da aplicação. A tabela `career_states` contém somente o UUID técnico do Supabase, o JSON da carreira, uma versão e a data da última sincronização.
 
+## Recursos da carreira
+
+- Elenco, base, mercado, táticas, calendário, estatísticas e histórico por temporada.
+- Negociações de compra, venda e empréstimo com atualização do livro-caixa.
+- Relatórios de partida com escalação, substituições e atualização automática de estatísticas.
+- Linha do tempo do calendário, caixa de notificações e eventos narrativos.
+- Competições personalizadas, filtros por faixa e seleção/exclusão em lote.
+- Backup e restauração em JSON, importação/exportação CSV e compressão de imagens.
+
 ## Controles de privacidade implementados
 
 - Nenhum analytics, anúncio ou cookie de marketing.
@@ -57,7 +66,8 @@ npm run check  # verifica interface, autenticação, privacidade e RLS
 - `index.html`: interface e tela de login.
 - `privacidade.html`: aviso de privacidade com dados do controlador preenchidos no build.
 - `src/auth.js`: login Google, sincronização, logout e exclusão.
-- `assets/app.js`: regras da carreira.
+- `assets/js/`: regras da carreira separadas por elenco, calendário, transferências, estatísticas, táticas e renderização.
+- `assets/app.css`, `assets/cloud.css` e `assets/responsive.css`: interface principal, autenticação e adaptação para telas menores.
 - `supabase/migrations/`: tabela mínima, RLS e função de salvamento.
 - `supabase/functions/delete-account/`: exclusão autenticada da conta.
 - `scripts/build.mjs`: build estático e injeção apenas das configurações públicas.

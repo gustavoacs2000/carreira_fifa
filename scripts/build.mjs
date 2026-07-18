@@ -52,13 +52,15 @@ if (process.env.VERCEL && missing.length) {
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(resolve(dist, 'assets', 'vendor'), { recursive: true });
+await mkdir(resolve(dist, 'assets', 'js'), { recursive: true });
 
 for (const file of ['index.html']) {
   await cp(resolve(root, file), resolve(dist, file));
 }
-for (const file of ['favicon.svg', 'legacy.css', 'styles.css', 'seed-data.js', 'app.js']) {
+for (const file of ['favicon.svg', 'app.css', 'cloud.css', 'responsive.css', 'styles.css', 'seed-data.js', 'bootstrap.js']) {
   await cp(resolve(root, 'assets', file), resolve(dist, 'assets', file));
 }
+await cp(resolve(root, 'assets', 'js'), resolve(dist, 'assets', 'js'), { recursive: true });
 await cp(resolve(root, 'data'), resolve(dist, 'data'), { recursive: true });
 await cp(
   resolve(root, 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'),
